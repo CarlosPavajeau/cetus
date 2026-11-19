@@ -160,6 +160,11 @@ public class NumberingRangeEntity extends PanacheEntityBase {
         return validTo != null && validTo.isBefore(today);
     }
 
+    /** The numbers the range has left. */
+    public long remaining() {
+        return "EXHAUSTED".equals(status) ? 0 : Math.max(0, rangeTo - nextNumber + 1);
+    }
+
     /** Returns the number to use and advances the counter. */
     public long take() {
         long number = nextNumber;

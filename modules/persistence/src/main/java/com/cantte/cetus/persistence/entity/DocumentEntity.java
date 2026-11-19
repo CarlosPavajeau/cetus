@@ -147,6 +147,13 @@ public class DocumentEntity extends PanacheEntityBase {
 
     @Column(name = "external_reference")
     public String externalReference;
+
+    /** The batch the document was issued in, and its position there; null for a document issued alone. */
+    @Column(name = "batch_id")
+    public UUID batchId;
+
+    @Column(name = "batch_position")
+    public Integer batchPosition;
     /** Set by the database; read back after the insert, so it is available once the entity is flushed. */
     @Generated(event = EventType.INSERT)
     @Column(name = "created_at", insertable = false, updatable = false)
@@ -183,7 +190,17 @@ public class DocumentEntity extends PanacheEntityBase {
             DocumentType type,
             CalculationResult calculation,
             ZonedDateTime now) {
-        NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
+        NumberingRangeEntity range = lockRange(issuer, environment, type, now.toLocalDate());
+        return draft(accountId, issuer, environment, range, calculation, now);
+    }
+
+    /**
+     * The issuer's active range for the type, locked until the transaction ends, so the documents numbered from it
+     * in this transaction take consecutive numbers.
+     */
+    public static NumberingRangeEntity lockRange(
+            IssuerEntity issuer, Environment environment, DocumentType type, LocalDate today) {
+        NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, today)
                 .orElseThrow(() -> new DomainException(
                         "no_active_numbering_range", "The issuer has no active numbering range for " + label(type)));
         if (type == DocumentType.INVOICE && environment == Environment.LIVE && range.technicalKeySealed == null) {
@@ -191,7 +208,18 @@ public class DocumentEntity extends PanacheEntityBase {
                     "technical_key_pending",
                     "The numbering range is waiting for its technical key from the DIAN; try again in a few minutes");
         }
+        return range;
+    }
 
+    /** A new document numbered from a range the caller locked with {@link #lockRange}. */
+    public static DocumentEntity draft(
+            UUID accountId,
+            IssuerEntity issuer,
+            Environment environment,
+            NumberingRangeEntity range,
+            CalculationResult calculation,
+            ZonedDateTime now) {
+        DocumentType type = range.documentType;
         DocumentEntity doc = new DocumentEntity();
         doc.id = Ids.newId();
         doc.accountId = accountId;
@@ -380,7 +408,8 @@ public class DocumentEntity extends PanacheEntityBase {
             UUID issuerId,
             LocalDate issuedFrom,
             LocalDate issuedTo,
-            String text) {}
+            String text,
+            UUID batchId) {}
 
     /**
      * The account's documents, newest first, paginated by id (UUID v7, so creation order): pass the last id
@@ -401,6 +430,9 @@ public class DocumentEntity extends PanacheEntityBase {
         }
         if (search.issuerId() != null) {
             sql.append(" AND d.issuer_id = :issuer");
+        }
+        if (search.batchId() != null) {
+            sql.append(" AND d.batch_id = :batch");
         }
         if (search.issuedFrom() != null) {
             sql.append(" AND d.issue_date >= :from");
@@ -432,6 +464,9 @@ public class DocumentEntity extends PanacheEntityBase {
         }
         if (search.issuerId() != null) {
             query.setParameter("issuer", search.issuerId());
+        }
+        if (search.batchId() != null) {
+            query.setParameter("batch", search.batchId());
         }
         if (search.issuedFrom() != null) {
             query.setParameter("from", search.issuedFrom());

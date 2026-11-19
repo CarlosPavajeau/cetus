@@ -20,6 +20,8 @@ public enum AuditAction {
     WEBHOOK_DELIVERY_RETRIED,
     /** Documents issued from the console; those issued through the API are not audited. */
     INVOICE_ISSUED,
+    /** Invoices received from a file, to issue in the background. */
+    DOCUMENT_BATCH_RECEIVED,
     CREDIT_NOTE_ISSUED,
     DEBIT_NOTE_ISSUED,
     /** An accepted document emailed again from the console. */

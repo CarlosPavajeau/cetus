@@ -481,6 +481,35 @@ public class CreditLedger {
                 entitlements.of(accountId, now));
     }
 
+    /**
+     * How many documents other than credit notes the account can still reserve: the credits left in its lots plus
+     * what remains of its subscription's overage limit or of its package's grace margin. Unlimited while observing.
+     * It reserves nothing, so it only tells what {@link #reserve} would take now.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public long capacity(UUID accountId, OffsetDateTime now) {
+        if (!enforce) {
+            return Long.MAX_VALUE;
+        }
+        Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
+        if (!entitlement.product()) {
+            return 0;
+        }
+        long available = ((Number) em.createNativeQuery("""
+                                SELECT coalesce(sum(remaining), 0) FROM billing.credit_grants
+                                WHERE account_id = :account AND status = 'ACTIVE' AND expires_at > :now
+                                """)
+                        .setParameter("account", accountId)
+                        .setParameter("now", now)
+                        .getSingleResult())
+                .longValue();
+        if (entitlement.subscription().isPresent()) {
+            Entitlements.Subscribed subscription = entitlement.subscription().get();
+            return available + Math.max(0, subscription.overageLimit() - overageUsed(subscription.periodId(), false));
+        }
+        return available + Math.max(0, entitlement.graceMargin() - graceUsed(accountId));
+    }
+
     private Optional<CreditRefused> refusal(
             UUID accountId, List<CreditGrantEntity> lots, Entitlements.Entitlement entitlement) {
         if (!entitlement.product()) {
