@@ -61,19 +61,29 @@ public class DianSubmissionEntity extends PanacheEntityBase {
         FAULT
     }
 
-    /**
-     * True when the DIAN may have registered the document though Cetus has no verdict: the last send got no
-     * answer (a timeout, an I/O error, an HTTP error or a SOAP fault), or the DIAN refused it as processed
-     * before (rule 90), the verdict of an earlier send GetStatus did not have yet.
-     */
-    public static boolean lastSendMayBeRegistered(UUID documentId) {
+    /** How the DIAN answered the last send of a document. */
+    public enum LastSend {
+        NONE,
+        ANSWERED,
+        /** A timeout, an I/O error, an HTTP error or a SOAP fault: the DIAN may have registered the document. */
+        UNANSWERED,
+        /** Refused as processed before (rule 90): the DIAN holds an earlier send, whose verdict GetStatus gives. */
+        PROCESSED_BEFORE
+    }
+
+    public static LastSend lastSend(UUID documentId) {
         Optional<DianSubmissionEntity> last = find(
                         "documentId = ?1 and operation in ('SendBillSync', 'SendTestSetAsync') "
                                 + "order by createdAt desc",
                         documentId)
                 .firstResultOptional();
-        return last.map(s -> (s.valid == null && s.trackId == null) || processedBefore(s.errors))
-                .orElse(false);
+        return last.map(s -> {
+                    if (s.valid == null && s.trackId == null) {
+                        return LastSend.UNANSWERED;
+                    }
+                    return processedBefore(s.errors) ? LastSend.PROCESSED_BEFORE : LastSend.ANSWERED;
+                })
+                .orElse(LastSend.NONE);
     }
 
     private static boolean processedBefore(List<String> errors) {

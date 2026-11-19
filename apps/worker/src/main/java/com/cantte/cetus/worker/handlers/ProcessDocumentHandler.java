@@ -13,6 +13,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.FileSequence;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity.ErrorKind;
+import com.cantte.cetus.persistence.entity.DianSubmissionEntity.LastSend;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.signing.KeyMaterial;
@@ -44,8 +45,10 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
@@ -112,12 +115,9 @@ public class ProcessDocumentHandler implements JobHandler {
 
     private Map<DocumentType, DocumentBuilder> builders;
 
-    private XadesSigner signer;
-
     @PostConstruct
     void init() {
         builders = builderInstances.stream().collect(Collectors.toMap(DocumentBuilder::type, Function.identity()));
-        signer = new XadesSigner(clock);
     }
 
     @Override
@@ -147,19 +147,25 @@ public class ProcessDocumentHandler implements JobHandler {
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
         jobContext.ensureOwned();
-        if (!testSet
-                && ctx.lastSendMayBeRegistered()
-                && ctx.existingCufe() != null
-                && registered(ctx, dian, keys, ctx.existingCufe())) {
-            return;
+        boolean mayBeRegistered = ctx.lastSend() == LastSend.UNANSWERED || ctx.lastSend() == LastSend.PROCESSED_BEFORE;
+        if (!testSet && mayBeRegistered && ctx.existingCufe() != null) {
+            if (registered(ctx, dian, keys, ctx.existingCufe())) {
+                return;
+            }
+            // Its CUFE is the only way to recover that verdict: neither redate nor send again.
+            if (ctx.lastSend() == LastSend.PROCESSED_BEFORE) {
+                throw new IllegalStateException(
+                        "The DIAN processed the document before but GetStatus has no verdict yet");
+            }
         }
 
-        LocalDateTime now =
-                LocalDateTime.ofInstant(clock.instant(), DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
+        // One instant for the day check, the issue date and SigningTime, so signing cannot cross midnight.
+        Instant signedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime now = LocalDateTime.ofInstant(signedAt, DianTime.ZONE);
         if (now.toLocalDate().equals(ctx.issueDate())) {
-            send(ctx, builder, keys, dian, testSet);
+            send(ctx, builder, keys, dian, testSet, signedAt);
         } else {
-            redated(ctx, now).ifPresent(redated -> send(redated, builder, keys, dian, testSet));
+            redated(ctx, now).ifPresent(redated -> send(redated, builder, keys, dian, testSet, signedAt));
         }
     }
 
@@ -192,11 +198,16 @@ public class ProcessDocumentHandler implements JobHandler {
     }
 
     private void send(
-            ProcessingContext ctx, DocumentBuilder builder, KeyMaterial keys, DianGateway dian, boolean testSet) {
+            ProcessingContext ctx,
+            DocumentBuilder builder,
+            KeyMaterial keys,
+            DianGateway dian,
+            boolean testSet,
+            Instant signedAt) {
         BuiltDocument built = Spans.traced(tracer, "document.build", () -> builder.build(ctx, secrets(ctx)));
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 
-        byte[] signedXml = Spans.traced(tracer, "document.sign", () -> sign(built.unsigned(), keys));
+        byte[] signedXml = Spans.traced(tracer, "document.sign", () -> sign(built.unsigned(), keys, signedAt));
         jobContext.ensureOwned();
         long sequence = fileSequence.next(ctx.issuerId(), ctx.issueDate().getYear());
         String nit = ctx.supplier().identificationNumber();
@@ -236,8 +247,9 @@ public class ProcessDocumentHandler implements JobHandler {
         return new DocumentSecrets(pin, technicalKey);
     }
 
-    private byte[] sign(Document document, KeyMaterial keys) {
-        signer.sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+    private static byte[] sign(Document document, KeyMaterial keys, Instant signedAt) {
+        new XadesSigner(Clock.fixed(signedAt, ZoneOffset.UTC))
+                .sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         return XmlSupport.serialize(document);
     }
 

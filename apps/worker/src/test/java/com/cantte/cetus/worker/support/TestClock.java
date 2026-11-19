@@ -7,21 +7,27 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
-/** The system clock until a test fixes it at an instant; {@link #reset} goes back to the system clock. */
+/** The system clock until a test fixes its instants; {@link #reset} goes back to the system clock. */
 @Alternative
 @Priority(1)
 @Singleton
 public class TestClock extends Clock {
 
-    private volatile Instant fixed;
+    private final Deque<Instant> instants = new ArrayDeque<>();
 
-    public void set(Instant instant) {
-        fixed = instant;
+    /** Each read takes the next instant; the last one stays. */
+    public synchronized void set(Instant first, Instant... later) {
+        instants.clear();
+        instants.add(first);
+        instants.addAll(List.of(later));
     }
 
-    public void reset() {
-        fixed = null;
+    public synchronized void reset() {
+        instants.clear();
     }
 
     @Override
@@ -51,8 +57,10 @@ public class TestClock extends Clock {
     }
 
     @Override
-    public Instant instant() {
-        Instant current = fixed;
-        return current == null ? Instant.now() : current;
+    public synchronized Instant instant() {
+        if (instants.isEmpty()) {
+            return Instant.now();
+        }
+        return instants.size() == 1 ? instants.peek() : instants.poll();
     }
 }
