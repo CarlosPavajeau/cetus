@@ -51,9 +51,11 @@ public class NotificationRecorder {
         }
         NotificationKind kind = NotificationKind.valueOf(notification.kind);
         AccountEntity account = AccountEntity.findById(notification.accountId);
-        List<String> recipients = kind.categories().isEmpty()
-                ? List.of()
-                : AccountContactEntity.emails(notification.accountId, kind.categories());
+        List<String> recipients = kind == NotificationKind.BATCH_FINISHED
+                ? List.of(notification.data.get("email"))
+                : kind.categories().isEmpty()
+                        ? List.of()
+                        : AccountContactEntity.emails(notification.accountId, kind.categories());
         return Optional.of(new Pending(
                 notification.id,
                 notification.accountId,

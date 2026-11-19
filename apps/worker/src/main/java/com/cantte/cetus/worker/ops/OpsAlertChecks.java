@@ -86,7 +86,8 @@ public class OpsAlertChecks {
                 FROM billing.documents d
                 WHERE d.status IN ('RECEIVED', 'PROCESSING') AND d.updated_at < :since
                   AND EXISTS (SELECT 1 FROM billing.jobs j WHERE j.reference_id = d.id
-                              AND j.job_type = 'PROCESS_DOCUMENT' AND j.status IN ('PENDING', 'RUNNING', 'DEAD'))
+                              AND j.job_type IN ('PROCESS_DOCUMENT', 'PROCESS_BATCH_DOCUMENT')
+                              AND j.status IN ('PENDING', 'RUNNING', 'DEAD'))
                 ORDER BY d.updated_at
                 """, Map.of("since", OffsetDateTime.now().minus(stuckAfter))).stream()
                 .map(r -> OpsAlert.of(
