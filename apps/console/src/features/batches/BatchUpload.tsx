@@ -81,9 +81,9 @@ export function BatchUpload({
   const [excludeInvalid, setExcludeInvalid] = useState(false);
   const [sameFile, setSameFile] = useState<{ createdAt: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
-  // One key per request body until the API answers: a retry after a lost answer gets the same batch back, and a
-  // different body (another file, issuer or choice of invoices) gets a key of its own.
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  // The key of the last body the API left unanswered: sending that same body again reuses it, so a retry after a lost
+  // answer gets the same batch back however the page changed in between; any other body gets a key of its own.
+  const unanswered = useRef<{ body: string; idempotencyKey: string } | null>(null);
   const send = useMutation({
     mutationFn: sendBatch,
     onSuccess: async (result, variables) => {
@@ -91,7 +91,7 @@ export function BatchUpload({
       if (!result.ok && codesRetryable.has(result.code)) {
         return;
       }
-      setIdempotencyKey(crypto.randomUUID());
+      unanswered.current = null;
       if (!result.ok) {
         const sent = invoicesOf(file).filter((invoice) =>
           variables.data.items.some((item) => item.reference === invoice.reference),
@@ -148,7 +148,6 @@ export function BatchUpload({
     setExcludeInvalid(false);
     setSameFile(null);
     send.reset();
-    setIdempotencyKey(crypto.randomUUID());
     try {
       const read = await readBatchFile(chosen);
       if (current !== selection.current) {
@@ -221,10 +220,10 @@ export function BatchUpload({
             <Select
               items={issuers.map((issuer) => ({ value: issuer.id, label: issuerLabel(issuer) }))}
               value={issuerId}
+              disabled={reading}
               onValueChange={(value) => {
                 const next = typeof value === "string" ? value : "";
                 setIssuerId(next);
-                setIdempotencyKey(crypto.randomUUID());
                 if (file?.ok && next) {
                   void warnSameFile(next, file.sha256);
                 }
@@ -331,13 +330,7 @@ export function BatchUpload({
               <ErrorTable errors={errors} />
               {valid.length > 0 && (
                 <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={excludeInvalid}
-                    onCheckedChange={(checked) => {
-                      setExcludeInvalid(checked);
-                      setIdempotencyKey(crypto.randomUUID());
-                    }}
-                  />
+                  <Checkbox checked={excludeInvalid} onCheckedChange={setExcludeInvalid} />
                   Excluir las {invalid.length} facturas con errores y emitir las otras{" "}
                   {valid.length}
                 </label>
@@ -387,15 +380,19 @@ export function BatchUpload({
                 if (!file?.ok) {
                   return;
                 }
-                send.mutate({
-                  data: {
-                    idempotencyKey,
-                    issuerId,
-                    fileName: file.fileName.slice(0, 255),
-                    fileSha256: file.sha256,
-                    items,
-                  },
-                });
+                const request = {
+                  issuerId,
+                  fileName: file.fileName.slice(0, 255),
+                  fileSha256: file.sha256,
+                  items,
+                };
+                const body = JSON.stringify(request);
+                const idempotencyKey =
+                  unanswered.current?.body === body
+                    ? unanswered.current.idempotencyKey
+                    : crypto.randomUUID();
+                unanswered.current = { body, idempotencyKey };
+                send.mutate({ data: { ...request, idempotencyKey } });
               }}
             >
               {send.isPending && <Spinner />}
