@@ -96,6 +96,11 @@ public class BatchExpansion {
         if (!canIssue(issuer)) {
             throw new DomainException("issuer_not_ready", "The issuer is not enabled to issue documents anymore");
         }
+        if (batch.environment == Environment.SANDBOX) {
+            // The block's items stop counting as pending as its documents start counting as issued; under the quota's
+            // lock, taken before the range as a single invoice does, no request counts between the two.
+            DocumentEntity.lockSandboxQuota(batch.accountId);
+        }
         ZonedDateTime now = ZonedDateTime.now(clock.withZone(DianTime.ZONE)).truncatedTo(ChronoUnit.SECONDS);
         NumberingRangeEntity range =
                 DocumentEntity.lockRange(issuer, batch.environment, DocumentType.INVOICE, now.toLocalDate());

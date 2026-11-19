@@ -198,6 +198,14 @@ public class DocumentEntity extends PanacheEntityBase {
      * The issuer's active range for the type, locked until the transaction ends, so the documents numbered from it
      * in this transaction take consecutive numbers.
      */
+    /** Until the transaction ends, the only one counting or using the account's SANDBOX documents of the day. */
+    public static void lockSandboxQuota(UUID accountId) {
+        getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "sandbox-quota:" + accountId)
+                .getSingleResult();
+    }
+
     public static NumberingRangeEntity lockRange(
             IssuerEntity issuer, Environment environment, DocumentType type, LocalDate today) {
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, today)

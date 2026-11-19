@@ -2,6 +2,7 @@ package com.cantte.cetus.api.batches;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -12,6 +13,7 @@ import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.persistence.entity.DocumentBatchItemEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
@@ -212,6 +214,33 @@ class ConsoleBatchResourceTest {
     }
 
     @Test
+    void aSingleSandboxInvoiceLeavesTheOpenBatchesTheirShareOfTheQuota() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Lote Cupo SAS");
+        String issuerId = sandboxIssuer(user);
+        send(
+                        user,
+                        UUID.randomUUID().toString(),
+                        batch(
+                                issuerId,
+                                item("F-1", newCustomer("900999999", null), List.of(line(1, 100))),
+                                item("F-2", newCustomer("900999999", null), List.of(line(1, 100)))))
+                .then()
+                .statusCode(202);
+        String apiKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "SANDBOX"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
+
+        // The quota of the test profile is 3: the batch's 2 items still to expand leave room for one more.
+        issueSandbox(apiKey).then().statusCode(202);
+        issueSandbox(apiKey).then().statusCode(429).body("code", equalTo("sandbox_daily_limit"));
+    }
+
+    @Test
     void aLiveBatchNeedsCreditsForEveryInvoice() {
         ConsoleUser user = ConsoleUser.newOrganization();
         IssuedDocuments.Issuer issuer = IssuedDocuments.liveIssuer(user, "Lote Produccion SAS");
@@ -359,6 +388,20 @@ class ConsoleBatchResourceTest {
             line.put("quantity", quantity);
         }
         return line;
+    }
+
+    private static Response issueSandbox(String apiKey) {
+        Map<String, Object> line = new HashMap<>(line(1, 100));
+        line.put("itemCode", "SERV-1");
+        Map<String, Object> invoice = Map.of(
+                "customer", newCustomer("900999999", null),
+                "payment", Map.of("method", "CASH", "meansCode", "10"),
+                "lines", List.of(line));
+        return given().header("Authorization", "Bearer " + apiKey)
+                .contentType(ContentType.JSON)
+                .header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoice)
+                .post("/v1/invoices");
     }
 
     private static String sandboxIssuer(ConsoleUser user) {

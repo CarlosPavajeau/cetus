@@ -16,7 +16,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Sending a batch is the console's heaviest request: its body is refused above {@code cetus.batches.body-max-bytes}
- * before it is read, well below the server's own limit, and each account sends at most a few batches a minute.
+ * before it is read, well below the server's own limit, and so is a body without a declared length, and each account sends at most a few batches a minute.
  */
 @Provider
 @Priority(Priorities.USER)
@@ -43,6 +43,11 @@ public class BatchRequestLimits implements ContainerRequestFilter {
     public void filter(ContainerRequestContext request) {
         if (!HttpMethod.POST.equals(request.getMethod())
                 || !PATH.equals(request.getUriInfo().getPath())) {
+            return;
+        }
+        if (request.getLength() < 0) {
+            request.abortWith(ProblemDetail.response(
+                    411, "length_required", "Send the batch with its Content-Length; a chunked body is not accepted"));
             return;
         }
         if (request.getLength() > bodyMaxBytes) {

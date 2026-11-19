@@ -127,9 +127,9 @@ public class BatchIntake {
 
     /** LIVE takes a credit per document, SANDBOX a slot of the daily quota; TEST takes neither. */
     private void requireAllowance(UUID accountId, Environment environment, int count) {
-        long pending = DocumentBatchEntity.pendingItems(accountId, environment, null);
         switch (environment) {
             case LIVE -> {
+                long pending = DocumentBatchEntity.pendingItems(accountId, environment, null);
                 long capacity = credits.capacity(accountId, OffsetDateTime.now());
                 if (capacity - pending < count) {
                     credits.refuse(
@@ -140,7 +140,7 @@ public class BatchIntake {
                                             + " more documents and the batch has " + count + " invoices"));
                 }
             }
-            case SANDBOX -> drafts.requireSandboxQuota(accountId, pending + count);
+            case SANDBOX -> drafts.requireSandboxQuota(accountId, count);
             case TEST -> {}
         }
     }

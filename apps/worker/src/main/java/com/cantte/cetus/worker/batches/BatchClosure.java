@@ -1,16 +1,21 @@
 package com.cantte.cetus.worker.batches;
 
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.DocumentBatchEntity.Status;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.jboss.logging.Logger;
@@ -33,6 +38,16 @@ public class BatchClosure {
 
     @Inject
     MeterRegistry meters;
+
+    void registerCounters(@Observes StartupEvent event) {
+        // From zero, as JobRunner does: a counter whose first sample is already 1 shows no increase, and the first
+        // PARTIAL or FAILED batch would raise no alert.
+        for (Environment environment : Environment.values()) {
+            for (Status outcome : List.of(Status.COMPLETED, Status.PARTIAL, Status.FAILED)) {
+                completed(environment, outcome).increment(0);
+            }
+        }
+    }
 
     /** Called in the transaction that gave one of the batch's documents its final status. */
     @Transactional(Transactional.TxType.MANDATORY)
@@ -58,11 +73,18 @@ public class BatchClosure {
         batch.completedAt = OffsetDateTime.now();
         notice(batch, counts);
         LOG.infof("Batch %s closed as %s", batch.id, batch.status);
-        String environment = batch.environment.name();
-        String outcome = batch.status.name().toLowerCase();
-        afterCommit.run(() -> meters.counter("cetus.batches.completed", "environment", environment, "outcome", outcome)
-                .increment());
+        Counter counter = completed(batch.environment, batch.status);
+        afterCommit.run(counter::increment);
         return true;
+    }
+
+    private Counter completed(Environment environment, Status outcome) {
+        return meters.counter(
+                "cetus.batches.completed",
+                "environment",
+                environment.name(),
+                "outcome",
+                outcome.name().toLowerCase());
     }
 
     private void notice(DocumentBatchEntity batch, DocumentBatchEntity.Counts counts) {
