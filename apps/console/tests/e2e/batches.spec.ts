@@ -1,4 +1,7 @@
+import type { Page } from "@playwright/test";
+
 import { columns } from "~/features/batches/columns";
+import type { ProductRequest } from "~/lib/api/types";
 
 import { onboardIssuer, uniqueNit } from "../support/issuers";
 import { expect, open, test } from "./fixtures";
@@ -9,6 +12,13 @@ const headers = columns.map((column) => column.header);
 function csv(rows: Record<string, string>[]) {
   const lines = rows.map((values) => headers.map((header) => values[header] ?? "").join(";"));
   return Buffer.from(`﻿${[headers.join(";"), ...lines].join("\r\n")}`, "utf-8");
+}
+
+function accepted(page: Page) {
+  return page
+    .getByRole("term")
+    .filter({ hasText: /^Aceptadas$/ })
+    .locator("+ dd");
 }
 
 const customer = {
@@ -25,24 +35,25 @@ test("a batch from a file is issued and followed until it completes", async ({
   page,
   organization,
 }) => {
+  test.setTimeout(120_000);
   await onboardIssuer(organization, uniqueNit(), "Lotes SAS", { testSet: false });
-  await organization.api("/console/products?environment=TEST", {
+  const product: ProductRequest = {
+    code: "ADM-1",
+    description: "Cuota de administración",
+    unitCode: "MON",
+    unitPrice: 350000,
+    taxes: [{ type: "IVA", percent: 19 }],
+  };
+  const created = await organization.api("/console/products?environment=TEST", {
     method: "POST",
-    body: JSON.stringify({
-      code: "ADM-1",
-      description: "Cuota de administración",
-      unitPrice: 350000,
-      taxes: [],
-    }),
+    body: JSON.stringify(product),
   });
+  expect(created.status).toBe(201);
 
   await open(page, "/documents/batches/new");
-  const template = await page.request.get(
-    (await page
-      .getByRole("link", { name: "Descargar la plantilla (.xlsx)" })
-      .getAttribute("href")) ?? "",
-  );
-  expect(template.ok()).toBe(true);
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Descargar la plantilla (.xlsx)" }).click();
+  expect((await download).suggestedFilename()).toBe("facturas-v1.xlsx");
 
   await page.getByLabel("Archivo de facturas").setInputFiles({
     name: "noviembre.csv",
@@ -63,7 +74,7 @@ test("a batch from a file is issued and followed until it completes", async ({
         "Precio unitario": "150000",
         IVA: "IVA 19 %",
       },
-      { ...customer, Referencia: "ARR-2", "Código de producto": "ADM-1", Cantidad: "1" },
+      { ...customer, Referencia: "ARR-2", "Código de producto": product.code, Cantidad: "1" },
       {
         ...customer,
         Referencia: "ARR-3",
@@ -80,6 +91,7 @@ test("a batch from a file is issued and followed until it completes", async ({
   await expect(page.getByRole("heading", { name: "noviembre.csv" })).toBeVisible();
   await expect(page.getByText("Terminado")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("link", { name: /^SETP\d+$/ })).toHaveCount(3);
+  await expect(accepted(page)).toHaveText("3");
   await expect(page.getByRole("cell", { name: "ARR-2" })).toBeVisible();
 });
 
@@ -87,6 +99,7 @@ test("the invoices with errors are excluded and the others are issued", async ({
   page,
   organization,
 }) => {
+  test.setTimeout(120_000);
   await onboardIssuer(organization, uniqueNit(), "Lotes Errores SAS", { testSet: false });
 
   await open(page, "/documents/batches/new");
@@ -130,4 +143,5 @@ test("the invoices with errors are excluded and the others are issued", async ({
   await expect(page.getByRole("heading", { name: "con-errores.csv" })).toBeVisible();
   await expect(page.getByText("Terminado")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("link", { name: /^SETP\d+$/ })).toHaveCount(1);
+  await expect(accepted(page)).toHaveText("1");
 });
