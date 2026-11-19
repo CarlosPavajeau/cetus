@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_app/documents/batches/$batchId")({
     if (!batch) {
       throw notFound();
     }
-    return { crumb: batch.fileName ?? "Lote" };
+    return { crumb: batch.fileName ?? "Lote", environment: batch.environment };
   },
   component: BatchPage,
   notFoundComponent: BatchNotFound,
