@@ -148,7 +148,7 @@ public class ProcessDocumentHandler implements JobHandler {
 
         jobContext.ensureOwned();
         if (!testSet
-                && ctx.lastSendUnanswered()
+                && ctx.lastSendMayBeRegistered()
                 && ctx.existingCufe() != null
                 && registered(ctx, dian, keys, ctx.existingCufe())) {
             return;

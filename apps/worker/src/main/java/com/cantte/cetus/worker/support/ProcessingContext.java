@@ -47,7 +47,7 @@ public record ProcessingContext(
         CertificateRef certificate,
         String existingCufe,
         String trackId,
-        boolean lastSendUnanswered,
+        boolean lastSendMayBeRegistered,
         DocumentStatus status,
         OffsetDateTime validatedAt)
         implements DeliverySnapshot {

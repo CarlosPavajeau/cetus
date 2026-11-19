@@ -1,5 +1,6 @@
 package com.cantte.cetus.persistence.entity;
 
+import com.cantte.cetus.domain.dian.DianRule;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,16 +62,24 @@ public class DianSubmissionEntity extends PanacheEntityBase {
     }
 
     /**
-     * True when the last send may have reached the DIAN without us receiving the answer: a timeout,
-     * an I/O error, an HTTP error or a SOAP fault. The DIAN may still have registered the document.
+     * True when the DIAN may have registered the document though Cetus has no verdict: the last send got no
+     * answer (a timeout, an I/O error, an HTTP error or a SOAP fault), or the DIAN refused it as processed
+     * before (rule 90), the verdict of an earlier send GetStatus did not have yet.
      */
-    public static boolean lastSendUnanswered(UUID documentId) {
+    public static boolean lastSendMayBeRegistered(UUID documentId) {
         Optional<DianSubmissionEntity> last = find(
                         "documentId = ?1 and operation in ('SendBillSync', 'SendTestSetAsync') "
                                 + "order by createdAt desc",
                         documentId)
                 .firstResultOptional();
-        return last.map(s -> s.valid == null && s.trackId == null).orElse(false);
+        return last.map(s -> (s.valid == null && s.trackId == null) || processedBefore(s.errors))
+                .orElse(false);
+    }
+
+    private static boolean processedBefore(List<String> errors) {
+        return errors.stream()
+                .flatMap(error -> DianRule.parse(error).stream())
+                .anyMatch(rule -> rule.code().equals("90"));
     }
 
     @Column(name = "created_at", insertable = false, updatable = false)

@@ -195,6 +195,26 @@ class IssueDateTest {
     }
 
     @Test
+    void aDocumentTheDianProcessedBeforeMidnightIsCheckedBeforeItIsRedated() {
+        dian.reply(SEND, Reply.fixture("send-bill-sync-processed-before.xml"));
+        dian.reply(STATUS, Reply.fixture("get-status-not-found.xml"), Reply.fixture("get-status-accepted.xml"));
+        UUID id = fixtures.invoice();
+        dated(id, CREATED_ON, CREATED_AT);
+        clock.set(Instant.parse("2026-11-19T04:59:59Z"));
+        catchThrowableOfType(IllegalStateException.class, () -> process(id));
+        String cufe = document(id).cufe;
+        clock.set(NEXT_DAY);
+
+        process(id);
+
+        DocumentEntity doc = document(id);
+        assertThat(doc.status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(doc.issueDate).isEqualTo(CREATED_ON);
+        assertThat(doc.cufe).isEqualTo(cufe);
+        assertThat(dian.operations()).containsExactly(SEND, STATUS, STATUS);
+    }
+
+    @Test
     void aResolutionThatExpiredBeforeTheSignatureFailsTheDocumentAndGivesBackItsCredit() {
         UUID id = fixtures.invoice();
         dated(id, CREATED_ON, CREATED_AT);
