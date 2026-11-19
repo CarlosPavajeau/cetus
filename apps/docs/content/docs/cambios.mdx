@@ -6,6 +6,12 @@ description: Los cambios de la API, del más reciente al más antiguo.
 Los cambios de la API `/v1`, del más reciente al más antiguo. Ver [Versionado](/versionado) para saber
 cuáles pueden llegar sin aviso.
 
+## 2026-11-19
+
+- `issueDate` de facturas y notas puede cambiar después de crear el documento: si Cetus lo firma un día distinto al
+  de su creación, toma la fecha de la firma, como exige la DIAN. La definitiva es la de `*.accepted` y la de `GET`.
+  Ver [Ciclo de vida](/guias/ciclo-de-vida#fecha-de-emisión).
+
 ## 2026-11-05
 
 - El margen de cortesía de los paquetes se llama ahora margen de gracia, en la documentación y en las descripciones de

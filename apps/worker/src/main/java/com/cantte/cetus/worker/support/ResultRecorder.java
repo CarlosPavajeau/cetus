@@ -39,6 +39,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +54,8 @@ import org.jboss.logging.Logger;
 public class ResultRecorder {
 
     private static final Logger LOG = Logger.getLogger(ResultRecorder.class);
+
+    static final String RESOLUTION_EXPIRED = "La resolución de numeración venció antes de firmar el documento";
 
     /** From creation to the DIAN's verdict: seconds usually, much longer while the DIAN is down. */
     private static final Duration[] VALIDATION_BUCKETS = {
@@ -329,6 +333,43 @@ public class ResultRecorder {
         if (!doc.status.isFinal()) {
             doc.dianStatusMessage = message;
         }
+    }
+
+    /**
+     * The document takes the day and time of its signature. False when nothing will process it again: another
+     * run finished it meanwhile.
+     */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public boolean redated(UUID documentId, LocalDate issueDate, LocalTime issueTime) {
+        DocumentEntity doc = DocumentEntity.lock(documentId);
+        if (doc.status.isFinal()) {
+            return false;
+        }
+        doc.issueDate = issueDate;
+        doc.issueTime = issueTime;
+        return true;
+    }
+
+    /**
+     * The numbering resolution expired before the document could be signed (FAD09a/b): it is FAILED and, unlike
+     * {@link #gaveUp}, its credit goes back, since the DIAN has not accepted it. Either it was never sent, or GetStatus
+     * just found no accepted document with its CUFE.
+     */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void resolutionExpired(UUID documentId) {
+        DocumentEntity doc = DocumentEntity.lock(documentId);
+        if (doc.status.isFinal()) {
+            return;
+        }
+        doc.status = DocumentStatus.FAILED;
+        doc.dianStatusMessage = RESOLUTION_EXPIRED;
+        if (doc.environment == Environment.LIVE) {
+            credits.release(documentId, Actor.system(), RESOLUTION_EXPIRED);
+        }
+        webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        DocumentType type = doc.documentType;
+        Environment environment = doc.environment;
+        afterCommit.run(() -> finalized(type, environment, "failed"));
     }
 
     /** No job will process the document again: it is FAILED, and the failed event is published. */

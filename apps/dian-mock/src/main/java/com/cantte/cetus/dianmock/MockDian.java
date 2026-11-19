@@ -372,7 +372,9 @@ final class MockDian {
                 document.fileName(),
                 document.supplierNit(),
                 document.supplierName(),
-                null);
+                null,
+                document.issueDate(),
+                document.signingDate());
     }
 
     private static Soap.Result result(DianResponse response, Submission submission) {

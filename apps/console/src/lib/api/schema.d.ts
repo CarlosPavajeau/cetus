@@ -2811,7 +2811,7 @@ export interface components {
             /** @description CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma. */
             cude: string | null;
             /**
-             * @description Fecha de emisión, en hora de Colombia.
+             * @description Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.
              * @example 2022-03-10
              */
             issueDate: components["schemas"]["LocalDate"];
@@ -3022,7 +3022,7 @@ export interface components {
             /** @description CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma. */
             cude: string | null;
             /**
-             * @description Fecha de emisión, en hora de Colombia.
+             * @description Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.
              * @example 2022-03-10
              */
             issueDate: components["schemas"]["LocalDate"];
@@ -3470,7 +3470,7 @@ export interface components {
             /** @description CUFE: código único de la factura ante la DIAN. Nulo hasta que Cetus lo firma. */
             cufe: string | null;
             /**
-             * @description Fecha de emisión, en hora de Colombia.
+             * @description Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.
              * @example 2022-03-10
              */
             issueDate: components["schemas"]["LocalDate"];

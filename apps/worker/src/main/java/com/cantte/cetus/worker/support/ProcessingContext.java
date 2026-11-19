@@ -9,6 +9,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.NumberingAuthorization;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
+import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -47,7 +48,7 @@ public record ProcessingContext(
         CertificateRef certificate,
         String existingCufe,
         String trackId,
-        boolean lastSendUnanswered,
+        DianSubmissionEntity.LastSend lastSend,
         DocumentStatus status,
         OffsetDateTime validatedAt)
         implements DeliverySnapshot {

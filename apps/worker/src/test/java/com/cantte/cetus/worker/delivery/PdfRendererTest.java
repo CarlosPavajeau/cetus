@@ -16,6 +16,7 @@ import com.cantte.cetus.domain.model.NumberingAuthorization;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
 import com.cantte.cetus.domain.model.PersonType;
+import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import java.io.IOException;
@@ -203,7 +204,7 @@ class PdfRendererTest {
                 null,
                 CUFE,
                 null,
-                false,
+                DianSubmissionEntity.LastSend.NONE,
                 DocumentStatus.ACCEPTED,
                 OffsetDateTime.of(2026, 10, 19, 2, 5, 9, 0, ZoneOffset.UTC));
     }

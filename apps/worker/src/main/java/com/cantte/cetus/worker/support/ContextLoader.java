@@ -204,7 +204,7 @@ public class ContextLoader {
                 certificate,
                 doc.cufe,
                 doc.dianTrackId,
-                DianSubmissionEntity.lastSendUnanswered(doc.id),
+                DianSubmissionEntity.lastSend(doc.id),
                 doc.status,
                 doc.validatedAt);
     }

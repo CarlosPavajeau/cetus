@@ -1,8 +1,12 @@
 package com.cantte.cetus.dian.simulated;
 
+import com.cantte.cetus.domain.dian.DianTime;
+import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.w3c.dom.Element;
@@ -17,6 +21,8 @@ import org.w3c.dom.Node;
  * @param fileName     the XML file name inside the zip, without its extension
  * @param supplierNit  the issuer, who receives the ApplicationResponse
  * @param customerId   the identification number of the customer, which picks the scenario
+ * @param issueDate    cbc:IssueDate, or null if missing
+ * @param signingDate  the day of xades:SigningTime in Colombia, or null if missing
  */
 public record SimulatedDocument(
         Kind kind,
@@ -25,7 +31,9 @@ public record SimulatedDocument(
         String fileName,
         String supplierNit,
         String supplierName,
-        String customerId) {
+        String customerId,
+        LocalDate issueDate,
+        LocalDate signingDate) {
 
     private static final String CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
     private static final String CAC = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
@@ -83,7 +91,23 @@ public record SimulatedDocument(
                 fileName,
                 text(child(supplier, CBC, "CompanyID")),
                 text(child(supplier, CBC, "RegistrationName")),
-                text(child(customer, CBC, "CompanyID")));
+                text(child(customer, CBC, "CompanyID")),
+                date(text(child(root, CBC, "IssueDate"))),
+                signingDate(root));
+    }
+
+    private static LocalDate date(String text) {
+        return text == null ? null : LocalDate.parse(text);
+    }
+
+    private static LocalDate signingDate(Element root) {
+        Node signingTime =
+                root.getElementsByTagNameNS(XadesSigner.XADES_NS, "SigningTime").item(0);
+        return signingTime == null
+                ? null
+                : OffsetDateTime.parse(signingTime.getTextContent().strip())
+                        .atZoneSameInstant(DianTime.ZONE)
+                        .toLocalDate();
     }
 
     /** SETP990000003 as the DIAN writes it in its messages: SETP-990000003. */

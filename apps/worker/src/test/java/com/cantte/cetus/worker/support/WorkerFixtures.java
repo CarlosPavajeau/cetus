@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.calc.TaxAmount;
+import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
@@ -520,7 +521,7 @@ public class WorkerFixtures {
         doc.numberingRangeId = range.id;
         doc.prefix = range.prefix;
         doc.number = range.take();
-        doc.issueDate = LocalDate.now();
+        doc.issueDate = LocalDate.now(DianTime.ZONE);
         doc.issueTime = LocalTime.of(10, 30);
         doc.customer = new Party(
                 PersonType.LEGAL_ENTITY,

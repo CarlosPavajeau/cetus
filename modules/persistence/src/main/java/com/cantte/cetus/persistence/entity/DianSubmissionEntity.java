@@ -1,5 +1,6 @@
 package com.cantte.cetus.persistence.entity;
 
+import com.cantte.cetus.domain.dian.DianRule;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,17 +61,35 @@ public class DianSubmissionEntity extends PanacheEntityBase {
         FAULT
     }
 
-    /**
-     * True when the last send may have reached the DIAN without us receiving the answer: a timeout,
-     * an I/O error, an HTTP error or a SOAP fault. The DIAN may still have registered the document.
-     */
-    public static boolean lastSendUnanswered(UUID documentId) {
+    /** How the DIAN answered the last send of a document. */
+    public enum LastSend {
+        NONE,
+        ANSWERED,
+        /** A timeout, an I/O error, an HTTP error or a SOAP fault: the DIAN may have registered the document. */
+        UNANSWERED,
+        /** Refused as processed before (rule 90): the DIAN holds an earlier send, whose verdict GetStatus gives. */
+        PROCESSED_BEFORE
+    }
+
+    public static LastSend lastSend(UUID documentId) {
         Optional<DianSubmissionEntity> last = find(
                         "documentId = ?1 and operation in ('SendBillSync', 'SendTestSetAsync') "
                                 + "order by createdAt desc",
                         documentId)
                 .firstResultOptional();
-        return last.map(s -> s.valid == null && s.trackId == null).orElse(false);
+        return last.map(s -> {
+                    if (s.valid == null && s.trackId == null) {
+                        return LastSend.UNANSWERED;
+                    }
+                    return processedBefore(s.errors) ? LastSend.PROCESSED_BEFORE : LastSend.ANSWERED;
+                })
+                .orElse(LastSend.NONE);
+    }
+
+    private static boolean processedBefore(List<String> errors) {
+        return errors.stream()
+                .flatMap(error -> DianRule.parse(error).stream())
+                .anyMatch(rule -> rule.code().equals("90"));
     }
 
     @Column(name = "created_at", insertable = false, updatable = false)

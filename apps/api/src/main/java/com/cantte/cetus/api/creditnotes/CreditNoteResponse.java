@@ -31,7 +31,9 @@ public record CreditNoteResponse(
                 description = "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma.")
         String cude,
 
-        @Schema(description = "Fecha de emisión, en hora de Colombia.")
+        @Schema(
+                description =
+                        "Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.")
         LocalDate issueDate,
 
         @Schema(description = "Moneda ISO 4217.", example = "COP")

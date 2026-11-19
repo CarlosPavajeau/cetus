@@ -51,6 +51,15 @@ el documento queda `FAILED` y llega el webhook `invoice.failed` (o el de su tipo
 (por ejemplo, a un envío cuya respuesta se perdió), el documento pasa a `ACCEPTED` o `REJECTED` y llega ese webhook. Cada respuesta trae el encabezado `X-Request-Id`: inclúyelo si escribes a
 soporte.
 
+## Fecha de emisión
+
+La DIAN exige que la fecha de emisión sea la del día en que se firma el documento. Cetus firma al procesar, así
+que si un documento creado cerca de la medianoche se firma al día siguiente (por ejemplo, porque un intento falló
+o había cola), su `issueDate` pasa a ese día, con un CUFE o CUDE nuevo (el código único que la DIAN le da a cada
+factura o nota, y que se calcula con la fecha). La fecha definitiva es la del webhook `*.accepted` y la de
+`GET /v1/invoices/{id}`. Si para ese día la resolución de numeración (la autorización de la DIAN para el rango de
+números del documento) ya venció, el documento queda `FAILED` y, en producción, se devuelve su crédito.
+
 ## Después de aceptado
 
 - **Archivos**: `GET /v1/invoices/{id}/files/{file}` da una URL temporal para el `xml`, el `pdf` o el
