@@ -101,6 +101,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
     case "INVOICE_ISSUED":
       return `${text(data.number)} · ${label(environmentLabel, data.environment)}`;
+    case "DOCUMENT_BATCH_RECEIVED":
+      return `${text(data.items)} facturas · ${label(environmentLabel, data.environment)}`;
     case "CREDIT_NOTE_ISSUED":
       return data.concept === "CANCELLATION"
         ? `${text(data.number)} anula la factura ${text(data.invoiceNumber)} · ${label(environmentLabel, data.environment)}`
