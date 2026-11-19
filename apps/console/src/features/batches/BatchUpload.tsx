@@ -67,6 +67,9 @@ export function BatchUpload({
   const queryClient = useQueryClient();
   const issuerFieldId = useId();
   const input = useRef<HTMLInputElement>(null);
+  // Each file or issuer chosen supersedes the previous one: a read or a check that finishes late must not replace it.
+  const selection = useRef(0);
+  const sameFileCheck = useRef(0);
   const [issuerId, setIssuerId] = useState(issuers.length === 1 ? (issuers[0]?.id ?? "") : "");
   const [reading, setReading] = useState(false);
   const [file, setFile] = useState<ReadFile | null>(null);
@@ -127,9 +130,12 @@ export function BatchUpload({
         : null;
 
   async function choose(chosen: File | undefined) {
-    if (!chosen) {
+    if (!chosen || send.isPending) {
       return;
     }
+    selection.current += 1;
+    const current = selection.current;
+    sameFileCheck.current += 1;
     setReading(true);
     setFile(null);
     setErrorsApi(new Map());
@@ -139,27 +145,41 @@ export function BatchUpload({
     setIdempotencyKey(crypto.randomUUID());
     try {
       const read = await readBatchFile(chosen);
+      if (current !== selection.current) {
+        return;
+      }
       setFile(read);
       if (read.ok && issuerId) {
         await warnSameFile(issuerId, read.sha256);
       }
     } catch {
+      if (current !== selection.current) {
+        return;
+      }
       setFile({
         ok: false,
         message: "No pudimos leer el archivo. Revisa que sea la plantilla en .xlsx o un .csv.",
         fileName: chosen.name,
       });
     } finally {
-      setReading(false);
+      if (current === selection.current) {
+        setReading(false);
+      }
     }
   }
 
   async function warnSameFile(issuer: string, sha256: string) {
+    sameFileCheck.current += 1;
+    const current = sameFileCheck.current;
     try {
       const found = await findSameFile({ data: { issuerId: issuer, fileSha256: sha256 } });
-      setSameFile(found.batch ? { createdAt: found.batch.createdAt } : null);
+      if (current === sameFileCheck.current) {
+        setSameFile(found.batch ? { createdAt: found.batch.createdAt } : null);
+      }
     } catch {
-      setSameFile(null);
+      if (current === sameFileCheck.current) {
+        setSameFile(null);
+      }
     }
   }
 
@@ -223,7 +243,9 @@ export function BatchUpload({
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
             event.preventDefault();
-            void choose(event.dataTransfer.files[0]);
+            if (!reading) {
+              void choose(event.dataTransfer.files[0]);
+            }
           }}
           className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-md border border-dashed bg-sidebar p-6 text-center"
         >
@@ -244,7 +266,7 @@ export function BatchUpload({
           <Button
             type="button"
             variant="outline"
-            disabled={reading}
+            disabled={reading || send.isPending}
             onClick={() => input.current?.click()}
           >
             {file ? "Elegir otro archivo" : "Seleccionar archivo"}

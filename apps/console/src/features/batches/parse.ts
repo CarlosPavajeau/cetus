@@ -89,6 +89,13 @@ export function parseCsv(content: string): ParsedFile {
     preview: 20,
   }).meta;
   const result = Papa.parse<string[]>(body, { delimiter });
+  const quotesError = result.errors.find((error) => error.type === "Quotes");
+  if (quotesError !== undefined) {
+    return {
+      ok: false,
+      message: `Hay comillas sin cerrar en la fila ${(quotesError.row ?? 0) + 1}. Revisa las comillas de esa fila y guarda de nuevo el CSV.`,
+    };
+  }
   if (result.data.every((cells) => cells.every((cell) => cell.trim() === ""))) {
     return { ok: false, message: "El archivo está vacío." };
   }

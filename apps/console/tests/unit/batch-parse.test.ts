@@ -366,6 +366,14 @@ describe("parseCsv", () => {
       ]);
     }
   });
+
+  it("refuses a file with a quote left open instead of joining the next rows into one cell", () => {
+    const [header, invoice] = csv(",").split("\r\n");
+    const opened = invoice?.replace("Arriendo", '"Arriendo') ?? "";
+    const parsed = parseCsv([header, opened, invoice].join("\r\n"));
+
+    expect(parsed.ok ? null : parsed.message).toContain("fila 2");
+  });
 });
 
 describe("locate", () => {
