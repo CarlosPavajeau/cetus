@@ -143,7 +143,7 @@ function BatchRow({ batch }: { batch: BatchView }) {
         </div>
       </TableCell>
       <TableCell className="pr-5">
-        <BatchStatusBadge status={batch.status} />
+        <BatchStatusBadge batch={batch} />
       </TableCell>
     </TableRow>
   );

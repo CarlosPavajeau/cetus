@@ -19,6 +19,7 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -323,6 +324,46 @@ class ConsoleBatchResourceTest {
                 .then()
                 .statusCode(404);
         assertThat(list(other, "TEST").getList("items")).isEmpty();
+    }
+
+    @Test
+    void anExpansionThatStopsMovingLeavesTheBatchWaiting() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Lote Espera SAS");
+        String issuerId = onboard(user).issuerId();
+        String id = send(
+                        user,
+                        UUID.randomUUID().toString(),
+                        batch(issuerId, item("W-1", newCustomer("900999999", null), List.of(line(1, 100)))))
+                .then()
+                .statusCode(202)
+                .extract()
+                .path("id");
+
+        expanding(id, OffsetDateTime.now());
+        user.request()
+                .get("/console/document-batches/" + id)
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("EXPANDING"))
+                .body("waiting", equalTo(false));
+
+        expanding(id, OffsetDateTime.now().minusMinutes(5));
+        user.request()
+                .get("/console/document-batches/" + id)
+                .then()
+                .statusCode(200)
+                .body("waiting", equalTo(true));
+        assertThat(list(user, "TEST").getList("items.waiting")).containsExactly(true);
+    }
+
+    private static void expanding(String id, OffsetDateTime movedAt) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> DocumentBatchEntity.update(
+                        "status = ?1, updatedAt = ?2 where id = ?3",
+                        DocumentBatchEntity.Status.EXPANDING,
+                        movedAt,
+                        UUID.fromString(id)));
     }
 
     @Test

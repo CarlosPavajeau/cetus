@@ -4,6 +4,7 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -61,11 +62,21 @@ public final class BatchViews {
             @Schema(nullable = true, description = "Why the batch stopped creating documents")
             String stopReason,
 
+            @Schema(description = "The expansion has created no document for a while: the batch waits for its turn")
+            boolean waiting,
+
             OffsetDateTime createdAt,
             @Schema(nullable = true) OffsetDateTime expandedAt,
             @Schema(nullable = true) OffsetDateTime completedAt) {
 
-        static BatchView from(DocumentBatchEntity batch, String issuerName, DocumentBatchEntity.Counts counts) {
+        static BatchView from(
+                DocumentBatchEntity batch,
+                String issuerName,
+                DocumentBatchEntity.Counts counts,
+                OffsetDateTime movedAt,
+                Duration waitingAfter) {
+            boolean waiting = batch.status == DocumentBatchEntity.Status.EXPANDING
+                    && movedAt.isBefore(OffsetDateTime.now().minus(waitingAfter));
             return new BatchView(
                     batch.id,
                     batch.issuerId,
@@ -77,6 +88,7 @@ public final class BatchViews {
                     BatchCounts.of(counts),
                     batch.fileName,
                     batch.stopReason,
+                    waiting,
                     batch.createdAt,
                     batch.expandedAt,
                     batch.completedAt);

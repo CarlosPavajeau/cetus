@@ -66,14 +66,14 @@ una por una mientras tanto siguen saliendo. Cuando termina, te llega un correo a
 **Descargar el resultado** baja un CSV (que Excel abre directamente) con la referencia, la posición, el
 número, el CUFE (el código único que la DIAN le da a cada factura), el estado, el motivo de cada rechazo y si la factura se creó.
 
-| Estado del lote  | Qué significa                                                                     |
-| ---------------- | --------------------------------------------------------------------------------- |
-| En espera        | Recibido; las facturas se crean en unos segundos.                                 |
-| Creando facturas | Numerando y guardando las facturas, en bloques.                                   |
-| Procesando       | Todas las facturas existen; esperan la respuesta de la DIAN.                      |
-| Terminado        | Todas tienen una respuesta final. Revisa las rechazadas en el resultado.          |
-| Incompleto       | El lote se detuvo antes de crear todas sus facturas; las creadas siguieron igual. |
-| Fallido          | El lote se detuvo sin crear ninguna factura.                                      |
+| Estado del lote  | Qué significa                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| En espera        | Recibido, o sin crear facturas desde hace un rato; sigue solo cuando llega su turno. |
+| Creando facturas | Numerando y guardando las facturas, en bloques.                                      |
+| Procesando       | Todas las facturas existen; esperan la respuesta de la DIAN.                         |
+| Terminado        | Todas tienen una respuesta final. Revisa las rechazadas en el resultado.             |
+| Incompleto       | El lote se detuvo antes de crear todas sus facturas; las creadas siguieron igual.    |
+| Fallido          | El lote se detuvo sin crear ninguna factura.                                         |
 
 Un lote se detiene si, mientras crea las facturas, se acaban los créditos de la cuenta o los números del
 rango, o el emisor deja de estar habilitado (autorizado por la DIAN para facturar). Las facturas que faltaban **no se numeran**: el resultado dice

@@ -105,7 +105,7 @@ function BatchDetail({ batch }: { batch: BatchView }) {
     <>
       <PageHeader
         title={batch.fileName ?? "Lote de facturas"}
-        status={<BatchStatusBadge status={batch.status} />}
+        status={<BatchStatusBadge batch={batch} />}
         summary={`${batch.issuerName} · ${environmentLabel[batch.environment]} · enviado el ${dateTime.format(new Date(batch.createdAt))}`}
         action={
           <div className="flex flex-wrap gap-2">
@@ -153,6 +153,8 @@ function BatchDetail({ batch }: { batch: BatchView }) {
             {batch.status === "RECEIVED"
               ? "En espera: las facturas se crean en unos segundos."
               : `${countFinished(batch.counts)} de ${batch.items} ${batch.items === 1 ? "factura terminada" : "facturas terminadas"}.`}
+            {batch.waiting &&
+              " En espera: las facturas que faltan se crean cuando llegue su turno."}
             {open && " Te enviamos un correo cuando el lote termine."}
           </p>
         </div>

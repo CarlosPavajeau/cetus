@@ -2720,6 +2720,8 @@ export interface components {
             fileName: string | null;
             /** @description Why the batch stopped creating documents */
             stopReason: string | null;
+            /** @description The expansion has created no document for a while: the batch waits for its turn */
+            waiting: boolean;
             createdAt: components["schemas"]["OffsetDateTime"];
             expandedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             completedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;

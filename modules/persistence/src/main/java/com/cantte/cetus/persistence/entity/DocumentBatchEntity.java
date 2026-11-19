@@ -219,6 +219,33 @@ public class DocumentBatchEntity extends PanacheEntityBase {
                 accepted, rejected, failed, created - accepted - rejected - failed, Math.max(0, items - created));
     }
 
+    /** The last change to the batch or to its documents; the expansion moves it with every document it creates. */
+    public OffsetDateTime movedAt() {
+        return movedAtOf(List.of(this)).get(id);
+    }
+
+    /** {@link #movedAt} of every batch given, with one query. */
+    public static Map<UUID, OffsetDateTime> movedAtOf(List<DocumentBatchEntity> batches) {
+        if (batches.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, OffsetDateTime> documentNewestAt = new HashMap<>();
+        getEntityManager()
+                .createQuery(
+                        "select d.batchId, max(d.createdAt) from DocumentEntity d where d.batchId in :batches"
+                                + " group by d.batchId",
+                        Object[].class)
+                .setParameter("batches", batches.stream().map(batch -> batch.id).toList())
+                .getResultList()
+                .forEach(row -> documentNewestAt.put((UUID) row[0], (OffsetDateTime) row[1]));
+        Map<UUID, OffsetDateTime> movedAt = new HashMap<>();
+        batches.forEach(batch -> {
+            OffsetDateTime newest = documentNewestAt.get(batch.id);
+            movedAt.put(batch.id, newest == null || newest.isBefore(batch.updatedAt) ? batch.updatedAt : newest);
+        });
+        return movedAt;
+    }
+
     public static boolean hasUnfinishedDocuments(UUID batchId) {
         return DocumentEntity.count("batchId = ?1 and status not in ?2", batchId, FINAL_DOCUMENT_STATUSES) > 0;
     }

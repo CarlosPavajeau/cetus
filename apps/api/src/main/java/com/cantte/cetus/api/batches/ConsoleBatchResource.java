@@ -41,12 +41,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -77,6 +79,9 @@ public class ConsoleBatchResource {
 
     @Inject
     AuditLog auditLog;
+
+    @ConfigProperty(name = "cetus.batches.waiting-after", defaultValue = "PT1M")
+    Duration waitingAfter;
 
     @Inject
     RequestOriginResolver origin;
@@ -150,8 +155,14 @@ public class ConsoleBatchResource {
         List<DocumentBatchEntity> page = rows.subList(0, Math.min(size, rows.size()));
         Map<UUID, String> issuerNames = issuerNames(page);
         Map<UUID, DocumentBatchEntity.Counts> counts = DocumentBatchEntity.countsOf(page);
+        Map<UUID, OffsetDateTime> movedAt = DocumentBatchEntity.movedAtOf(page);
         List<BatchView> items = page.stream()
-                .map(batch -> BatchView.from(batch, issuerNames.getOrDefault(batch.issuerId, ""), counts.get(batch.id)))
+                .map(batch -> BatchView.from(
+                        batch,
+                        issuerNames.getOrDefault(batch.issuerId, ""),
+                        counts.get(batch.id),
+                        movedAt.get(batch.id),
+                        waitingAfter))
                 .toList();
         return new BatchPage(items, rows.size() > size ? page.getLast().id : null);
     }
@@ -186,7 +197,7 @@ public class ConsoleBatchResource {
     public BatchView get(@PathParam("id") UUID id) {
         DocumentBatchEntity batch = find(id);
         IssuerEntity issuer = IssuerEntity.findById(batch.issuerId);
-        return BatchView.from(batch, issuer.legalName, batch.counts());
+        return BatchView.from(batch, issuer.legalName, batch.counts(), batch.movedAt(), waitingAfter);
     }
 
     /** Someone removed from the organization: the batches they sent stop emailing them when they finish. */
