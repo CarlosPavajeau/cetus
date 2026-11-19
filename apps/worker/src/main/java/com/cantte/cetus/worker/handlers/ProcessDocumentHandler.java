@@ -7,6 +7,7 @@ import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.DianZip;
 import com.cantte.cetus.dian.UploadResponse;
 import com.cantte.cetus.domain.dian.DianFileNames;
+import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobTypes;
@@ -34,6 +35,7 @@ import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
 import com.cantte.cetus.worker.support.SandboxCredentials;
 import com.cantte.cetus.worker.support.Spans;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.annotation.PostConstruct;
@@ -41,6 +43,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +68,11 @@ public class ProcessDocumentHandler implements JobHandler {
 
     private static final Logger LOG = Logger.getLogger(ProcessDocumentHandler.class);
 
-    private final XadesSigner signer = new XadesSigner();
+    @Inject
+    Clock clock;
+
+    @Inject
+    MeterRegistry meters;
 
     @Inject
     ContextLoader loader;
@@ -102,9 +112,12 @@ public class ProcessDocumentHandler implements JobHandler {
 
     private Map<DocumentType, DocumentBuilder> builders;
 
+    private XadesSigner signer;
+
     @PostConstruct
     void init() {
         builders = builderInstances.stream().collect(Collectors.toMap(DocumentBuilder::type, Function.identity()));
+        signer = new XadesSigner(clock);
     }
 
     @Override
@@ -141,6 +154,45 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
 
+        LocalDateTime now =
+                LocalDateTime.ofInstant(clock.instant(), DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
+        if (now.toLocalDate().equals(ctx.issueDate())) {
+            send(ctx, builder, keys, dian, testSet);
+        } else {
+            redated(ctx, now).ifPresent(redated -> send(redated, builder, keys, dian, testSet));
+        }
+    }
+
+    /**
+     * The DIAN rejects a document whose issue date is not the day of its signature (FAD09e), and the signature
+     * carries the time it was made: a document signed after the day it was created takes the day of its
+     * signature. Empty when it cannot be sent.
+     */
+    private Optional<ProcessingContext> redated(ProcessingContext ctx, LocalDateTime now) {
+        LocalDate endDate = ctx.authorization().endDate();
+        if (endDate != null && now.toLocalDate().isAfter(endDate)) {
+            recorder.resolutionExpired(ctx.documentId());
+            return Optional.empty();
+        }
+        if (!recorder.redated(ctx.documentId(), now.toLocalDate(), now.toLocalTime())) {
+            return Optional.empty();
+        }
+        LOG.infof("Document %s redated from %s to %s", ctx.documentId(), ctx.issueDate(), now.toLocalDate());
+        Span.current().setAttribute("cetus.document.redated", true);
+        meters.counter(
+                        "cetus.documents.redated",
+                        "document.type",
+                        ctx.documentType().name(),
+                        "environment",
+                        ctx.environment().name())
+                .increment();
+        return Optional.of(loader.load(ctx.documentId())
+                .orElseThrow(
+                        () -> new IllegalStateException("Document " + ctx.documentId() + " vanished while redated")));
+    }
+
+    private void send(
+            ProcessingContext ctx, DocumentBuilder builder, KeyMaterial keys, DianGateway dian, boolean testSet) {
         BuiltDocument built = Spans.traced(tracer, "document.build", () -> builder.build(ctx, secrets(ctx)));
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 

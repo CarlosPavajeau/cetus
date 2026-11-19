@@ -2034,7 +2034,7 @@
             "description": "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma."
           },
           "issueDate": {
-            "description": "Fecha de emisión, en hora de Colombia.",
+            "description": "Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.",
             "type": "string",
             "examples": [
               "2022-03-10"
@@ -2510,7 +2510,7 @@
             "description": "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma."
           },
           "issueDate": {
-            "description": "Fecha de emisión, en hora de Colombia.",
+            "description": "Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.",
             "type": "string",
             "examples": [
               "2022-03-10"
@@ -2970,7 +2970,7 @@
             "description": "CUFE: código único de la factura ante la DIAN. Nulo hasta que Cetus lo firma."
           },
           "issueDate": {
-            "description": "Fecha de emisión, en hora de Colombia.",
+            "description": "Fecha de emisión, en hora de Colombia. Puede cambiar si Cetus firma el documento un día distinto al de su creación, porque la DIAN exige que sea la fecha de la firma: la definitiva es la del evento `*.accepted` y la de `GET`.",
             "type": "string",
             "examples": [
               "2022-03-10"

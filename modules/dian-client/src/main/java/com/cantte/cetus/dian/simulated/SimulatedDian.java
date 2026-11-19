@@ -47,6 +47,13 @@ public final class SimulatedDian {
     private static final List<String> CREDIT_NOTE_REJECTION = List.of(
             "Regla: CBF04, Rechazo: La descripción de la corrección no corresponde al concepto de corrección informado.");
 
+    private static final String FAD09E =
+            "Regla: FAD09e, Rechazo: La fecha de generación de la factura es diferente a la fecha de firma de la factura";
+    private static final String CAD09E =
+            "Regla: CAD09e, Rechazo: La fecha de generación de la NC es diferente a la fecha de firma de la NC";
+    private static final String DAD09E =
+            "Regla: DAD09e, Rechazo: La fecha de generación de la ND es diferente a la fecha de firma de la ND";
+
     private final KeyMaterial keys;
     private final XadesSigner signer;
     private final Clock clock;
@@ -103,13 +110,16 @@ public final class SimulatedDian {
     }
 
     private DianResponse result(String operation, SimulatedDocument document, SimulatedScenario scenario) {
-        List<String> errors = switch (scenario) {
+        Optional<String> signedAnotherDay = signedAnotherDay(document);
+        List<String> errors = signedAnotherDay.map(List::of).orElseGet(() -> switch (scenario) {
             case ACCEPTED_WITH_NOTIFICATIONS -> List.of(FAJ43B);
             case REJECTED -> REJECTION;
             case CREDIT_NOTE_REJECTED -> CREDIT_NOTE_REJECTION;
             default -> List.of();
-        };
-        boolean valid = scenario != SimulatedScenario.REJECTED && scenario != SimulatedScenario.CREDIT_NOTE_REJECTED;
+        });
+        boolean valid = signedAnotherDay.isEmpty()
+                && scenario != SimulatedScenario.REJECTED
+                && scenario != SimulatedScenario.CREDIT_NOTE_REJECTED;
         String statusCode = valid ? "00" : "99";
         String description = valid ? "Procesado Correctamente." : "Validación contiene errores en campos mandatorios.";
         String message = valid
@@ -131,6 +141,20 @@ public final class SimulatedDian {
                         + "<b:XmlFileName>" + escape(document.fileName()) + "</b:XmlFileName>");
         return new DianResponse(
                 valid, statusCode, description, message, errors, applicationResponse, document.uniqueCode(), raw);
+    }
+
+    private static Optional<String> signedAnotherDay(SimulatedDocument document) {
+        if (document.issueDate() == null
+                || document.signingDate() == null
+                || document.issueDate().equals(document.signingDate())) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                switch (document.kind()) {
+                    case INVOICE -> FAD09E;
+                    case CREDIT_NOTE -> CAD09E;
+                    case DEBIT_NOTE -> DAD09E;
+                });
     }
 
     /** The DIAN's ApplicationResponse: 02 validated or 04 rejected, one line per rule. */

@@ -5,13 +5,16 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.cantte.cetus.dian.simulated.SimulatedDian;
 import com.cantte.cetus.dian.simulated.SimulatedDocument;
+import com.cantte.cetus.domain.dian.DianRule;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
+import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Optional;
@@ -148,6 +151,49 @@ class SimulatedDianTest {
     }
 
     @Test
+    void readsTheIssueDateAndTheDayOfTheSignature() {
+        SimulatedDocument document = SimulatedDocument.fromZip(
+                zip("Invoice", "SIM1", "222222222222", "2026-10-23", "2026-10-24T00:00:01-05:00"));
+
+        assertThat(document.issueDate()).isEqualTo(LocalDate.of(2026, 10, 23));
+        assertThat(document.signingDate()).isEqualTo(LocalDate.of(2026, 10, 24));
+    }
+
+    @Test
+    void anIssueDateOtherThanTheDayOfTheSignatureIsRejected() {
+        assertThat(signedTheNextDay("Invoice").errors())
+                .containsExactly("Regla: FAD09e, Rechazo: La fecha de generación de la factura es diferente a la fecha"
+                        + " de firma de la factura");
+        assertThat(signedTheNextDay("CreditNote").errors())
+                .containsExactly("Regla: CAD09e, Rechazo: La fecha de generación de la NC es diferente a la fecha de"
+                        + " firma de la NC");
+        DianResponse debitNote = signedTheNextDay("DebitNote");
+        assertThat(debitNote.valid()).isFalse();
+        assertThat(debitNote.statusCode()).isEqualTo("99");
+        assertThat(debitNote.errors())
+                .containsExactly("Regla: DAD09e, Rechazo: La fecha de generación de la ND es diferente a la fecha de"
+                        + " firma de la ND");
+        assertThat(DianRule.parse(debitNote.errors().getFirst()))
+                .hasValueSatisfying(rule -> assertThat(rule.code()).isEqualTo("DAD09e"));
+    }
+
+    @Test
+    void anIssueDateOnTheDayOfTheSignatureIsAccepted() {
+        DianResponse response = dian.sendBillSync(
+                SimulatedDocument.fromZip(
+                        zip("Invoice", "SIM1", "222222222222", "2026-10-23", "2026-10-23T23:59:59-05:00")),
+                0);
+
+        assertThat(response.valid()).isTrue();
+    }
+
+    private static DianResponse signedTheNextDay(String root) {
+        return dian.sendBillSync(
+                SimulatedDocument.fromZip(zip(root, "SIM1", "222222222222", "2026-10-23", "2026-10-24T00:00:01-05:00")),
+                0);
+    }
+
+    @Test
     void anUnknownTrackIdIsNotFound() {
         DianResponse status = dian.getStatus("unknown", Optional.empty(), 0);
 
@@ -160,10 +206,22 @@ class SimulatedDianTest {
     }
 
     private static byte[] zip(String root, String number, String customerId) {
+        return zip(root, number, customerId, null, null);
+    }
+
+    private static byte[] zip(String root, String number, String customerId, String issueDate, String signingTime) {
+        String signature = signingTime == null
+                ? ""
+                : "<ext:UBLExtensions xmlns:ext=\"urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2\">"
+                        + "<ext:UBLExtension><ext:ExtensionContent><xades:SigningTime xmlns:xades=\""
+                        + XadesSigner.XADES_NS + "\">" + signingTime + "</xades:SigningTime></ext:ExtensionContent>"
+                        + "</ext:UBLExtension></ext:UBLExtensions>";
         String xml = "<" + root + " xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:" + root + "-2\""
                 + " xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\""
                 + " xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">"
-                + "<cbc:ID>" + number + "</cbc:ID><cbc:UUID schemeName=\"CUFE-SHA384\">" + CUFE + "</cbc:UUID>"
+                + signature + "<cbc:ID>" + number + "</cbc:ID>"
+                + (issueDate == null ? "" : "<cbc:IssueDate>" + issueDate + "</cbc:IssueDate>")
+                + "<cbc:UUID schemeName=\"CUFE-SHA384\">" + CUFE + "</cbc:UUID>"
                 + "<cac:AccountingSupplierParty><cac:Party><cac:PartyTaxScheme><cbc:RegistrationName>Acme SAS"
                 + "</cbc:RegistrationName><cbc:CompanyID>900123456</cbc:CompanyID></cac:PartyTaxScheme></cac:Party>"
                 + "</cac:AccountingSupplierParty><cac:AccountingCustomerParty><cac:Party><cac:PartyTaxScheme>"
