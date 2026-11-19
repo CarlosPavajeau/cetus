@@ -6,7 +6,10 @@ export const fileBytesMax = 5 * 1024 * 1024;
 /** A file that takes longer than this to read is not a spreadsheet anyone filled in: the reader stops. */
 const readTimeoutMs = 30_000;
 
-export type ReadFile = ParsedFile & { fileName: string; sha256: string };
+export type ReadFile = { fileName: string } & (
+  | (Extract<ParsedFile, { ok: true }> & { sha256: string })
+  | Extract<ParsedFile, { ok: false }>
+);
 
 /** Reads the .xlsx or .csv in a Web Worker, so a crafted file cannot touch the page, and hashes it. */
 export async function readBatchFile(file: File): Promise<ReadFile> {
@@ -16,7 +19,6 @@ export async function readBatchFile(file: File): Promise<ReadFile> {
       ok: false,
       message: "Sube la plantilla en .xlsx o un archivo .csv.",
       fileName,
-      sha256: "",
     };
   }
   if (file.size > fileBytesMax) {
@@ -24,11 +26,10 @@ export async function readBatchFile(file: File): Promise<ReadFile> {
       ok: false,
       message: "El archivo pesa más de 5 MB. Divídelo en varios lotes.",
       fileName,
-      sha256: "",
     };
   }
   const [parsed, sha256] = await Promise.all([inWorker(file), digest(file)]);
-  return { ...parsed, fileName, sha256 };
+  return parsed.ok ? { ...parsed, fileName, sha256 } : { ...parsed, fileName };
 }
 
 function inWorker(file: File): Promise<ParsedFile> {

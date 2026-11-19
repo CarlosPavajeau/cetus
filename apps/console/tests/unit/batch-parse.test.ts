@@ -72,6 +72,7 @@ describe("the template", () => {
         "Medio de pago": values("paymentMeans")[index] ?? null,
         Unidad: values("unitCode")[index] ?? null,
         IVA: values("tax")[index % values("tax").length] ?? null,
+        "Impuesto al consumo": values("consumptionTax")[index % 2] ?? null,
         Municipio: values("municipality")[index * 100] ?? null,
         Dirección: "Calle 1 # 2-3",
       }),
@@ -81,12 +82,27 @@ describe("the template", () => {
     expect(parsed).toHaveLength(values("identificationType").length);
   });
 
-  it("is refused in an older version", () => {
-    const parsed = parseWorkbook([
-      { sheet: "Facturas", data: [headers] },
-      { sheet: "_meta", data: [["facturas-v0"]] },
-    ]);
-    expect(parsed).toMatchObject({ ok: false });
+  it("is refused in an older version, and another spreadsheet with its headers too", () => {
+    const filled = [headers, row({ ...customer, ...line, Referencia: "A" })];
+    expect(
+      parseWorkbook([
+        { sheet: "Facturas", data: filled },
+        { sheet: "_meta", data: [[templateVersion]] },
+      ]),
+    ).toMatchObject({ ok: true });
+    for (const sheets of [
+      [
+        { sheet: "Facturas", data: filled },
+        { sheet: "_meta", data: [["facturas-v0"]] },
+      ],
+      [{ sheet: "Facturas", data: filled }],
+      [
+        { sheet: "Hoja1", data: filled },
+        { sheet: "_meta", data: [[templateVersion]] },
+      ],
+    ]) {
+      expect(parseWorkbook(sheets)).toMatchObject({ ok: false });
+    }
   });
 });
 
@@ -161,6 +177,29 @@ describe("parseTable", () => {
       payment: { method: "CASH", meansCode: "10" },
       lines: [{ productCode: "ARR-1", quantity: 2.5 }],
     });
+  });
+
+  it("adds the consumption tax to the line's IVA, or alone", () => {
+    const parsed = invoices(
+      parseTable([
+        headers,
+        row({
+          ...customer,
+          ...line,
+          Referencia: "A",
+          "Impuesto al consumo": "Impuesto al consumo 8 %",
+        }),
+        row({ ...customer, ...line, Referencia: "B", IVA: null, "Impuesto al consumo": "INC_8" }),
+      ]),
+    );
+
+    expect(parsed.map((invoice) => invoice.item?.lines[0]?.taxes)).toEqual([
+      [
+        { type: "IVA", percent: 19 },
+        { type: "INC", percent: 8 },
+      ],
+      [{ type: "INC", percent: 8 }],
+    ]);
   });
 
   it("reads a municipality by its label or its DANE code, and dates as typed", () => {
@@ -280,14 +319,14 @@ describe("parseTable", () => {
 
   it("refuses a file without the template's columns or over its limits", () => {
     expect(parseTable([["Referencia", "Cliente"]])).toMatchObject({ ok: false });
-    const tooManyRows = Array.from({ length: rowsMax + 1 }, () =>
+    const rowsTooMany = Array.from({ length: rowsMax + 1 }, () =>
       row({ ...customer, ...line, Referencia: "A" }),
     );
-    expect(parseTable([headers, ...tooManyRows])).toMatchObject({ ok: false });
-    const tooManyInvoices = Array.from({ length: referencesMax + 1 }, (_, index) =>
+    expect(parseTable([headers, ...rowsTooMany])).toMatchObject({ ok: false });
+    const invoicesTooMany = Array.from({ length: referencesMax + 1 }, (_, index) =>
       row({ ...customer, ...line, Referencia: `R-${index}` }),
     );
-    expect(parseTable([headers, ...tooManyInvoices])).toMatchObject({ ok: false });
+    expect(parseTable([headers, ...invoicesTooMany])).toMatchObject({ ok: false });
   });
 });
 

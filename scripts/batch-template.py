@@ -4,8 +4,7 @@ The template is versioned in the repo; run this only to make a new version (and 
 templateVersion in apps/console/src/features/batches/columns.ts). The labels must match columns.ts: the console's
 unit tests read the committed file and fail otherwise.
 
-    python3 -m venv /tmp/venv && /tmp/venv/bin/pip install openpyxl==3.1.5
-    /tmp/venv/bin/python scripts/batch-template.py
+    mise run batch-template
 """
 
 import pathlib
@@ -50,10 +49,10 @@ LISTS = {
         "Otro",
     ],
     "unitCode": ["Unidad (94)", "Kilogramo (KGM)", "Litro (LTR)", "Metro (MTR)", "Hora (HUR)", "Día (DAY)", "Mes (MON)"],
-    "tax": ["IVA 19 %", "IVA 5 %", "Exento de IVA (0 %)", "Excluido de IVA", "Impuesto al consumo 8 %"],
+    "tax": ["IVA 19 %", "IVA 5 %", "Exento de IVA (0 %)", "Excluido de IVA"],
+    "consumptionTax": ["Impuesto al consumo 8 %"],
 }
 
-# (key, header, required, help, width)
 COLUMNS = [
     ("reference", "Referencia", "Sí", "Tu referencia de la factura. Las filas con la misma referencia son una factura.", 18),
     ("identificationType", "Tipo de identificación", "Sí", "Del cliente.", 22),
@@ -70,12 +69,13 @@ COLUMNS = [
     ("paymentMethod", "Forma de pago", "Sí", "", 14),
     ("paymentMeans", "Medio de pago", "Sí", "", 22),
     ("dueDate", "Fecha de vencimiento", "Si es a crédito", "Como fecha de Excel, AAAA-MM-DD o DD/MM/AAAA.", 20),
-    ("productCode", "Código de producto", "Si no hay descripción y precio", "Si está en tus productos, la descripción, la unidad, el precio y el IVA vacíos se toman de allí.", 18),
+    ("productCode", "Código de producto", "Si no hay descripción y precio", "Si está en tus productos, la descripción, la unidad, el precio y los impuestos vacíos se toman de allí.", 18),
     ("description", "Descripción", "Si el código no está en tus productos", "", 34),
     ("quantity", "Cantidad", "Sí", "Mayor que cero. Coma o punto para los decimales.", 10),
     ("unitCode", "Unidad", "No", "Por defecto, Unidad (94). Puedes escribir otro código DIAN.", 14),
     ("unitPrice", "Precio unitario", "Si el código no está en tus productos", "Antes de impuestos, sin separadores de miles.", 16),
-    ("tax", "IVA", "Si el código no está en tus productos", "Vacío: excluido de impuestos.", 22),
+    ("tax", "IVA", "Si el código no está en tus productos", "Vacío: excluido de IVA.", 22),
+    ("consumptionTax", "Impuesto al consumo", "No", "Junto al IVA o en su lugar, como en restaurantes y bares.", 22),
     ("notes", "Notas", "No", "Aparecen en la factura.", 30),
 ]
 
@@ -83,9 +83,9 @@ EXAMPLE = [
     ["ARR-2026-11-001", "NIT", "900123456", "", "Persona jurídica", "Inmobiliaria Andina SAS", "No aplica – Otros (R-99-PN)",
      "Responsable de IVA", "Montería - Córdoba", "Calle 27 # 3-45", "pagos@andina.example", "", "A crédito",
      "Transferencia bancaria", "2026-12-15", "", "Arriendo local 101 - noviembre", "1", "Mes (MON)", "2500000",
-     "IVA 19 %", "Contrato 2024-018"],
+     "IVA 19 %", "", "Contrato 2024-018"],
     ["ARR-2026-11-001", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Administración - noviembre", "1",
-     "Mes (MON)", "350000", "Excluido de IVA", ""],
+     "Mes (MON)", "350000", "Excluido de IVA", "", ""],
 ]
 
 HEADER_FILL = PatternFill("solid", fgColor="1F2937")
@@ -151,9 +151,11 @@ def main():
         sheet.add_data_validation(validation)
         validation.add(cells)
 
-    for column in ("C", "D", "L"):
+    keys = [key for key, *_rest in COLUMNS]
+    for key in ("identificationNumber", "checkDigit", "phone"):
+        letter = get_column_letter(keys.index(key) + 1)
         for row in range(2, ROWS + 1):
-            sheet[f"{column}{row}"].number_format = "@"
+            sheet[f"{letter}{row}"].number_format = "@"
 
     guide = book.create_sheet("Instrucciones")
     guide["A1"] = "Cómo llenar la plantilla"

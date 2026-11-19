@@ -111,6 +111,11 @@ run = "pnpm --filter @cetus/docs dev"
 description = "Build the API's OpenAPI spec and write its public part (/v1) for the docs site"
 run = ["./gradlew :apps:api:build -x test --console=plain", "node scripts/openapi-public.mjs"]
 
+[tasks.batch-template]
+description = "Write the batch invoicing template (apps/console/public/plantillas) with scripts/batch-template.py"
+tools = { uv = "0.13.7" }
+run = "uv run --no-project --python 3.13 --with openpyxl==3.1.5 scripts/batch-template.py"
+
 [tasks.security-scan]
 description = "Scan dependencies, secrets and Dockerfiles with Trivy, as the Security check does on every PR"
 run = "scripts/security-scan.sh repo"

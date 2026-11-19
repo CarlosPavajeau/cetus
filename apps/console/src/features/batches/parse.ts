@@ -6,6 +6,7 @@ import type { BatchError, BatchItem, BatchLine } from "~/lib/api/types";
 
 import {
   columns,
+  consumptionTaxOptions,
   header,
   identificationTypeOptions,
   invoiceSheet,
@@ -20,8 +21,6 @@ import {
   type ColumnKey,
   type Option,
 } from "./columns";
-
-// Turns a spreadsheet into the items of a batch. It knows nothing of React nor of the worker that runs it.
 
 export const referencesMax = 1000;
 export const rowsMax = 5000;
@@ -58,20 +57,23 @@ export type ParsedFile =
   | { ok: true; invoices: ParsedInvoice[]; rowCount: number }
   | { ok: false; message: string };
 
-/** The template, or any .xlsx whose first sheet (or one named "Facturas") has its headers. */
+/** Only the template, by the version in its hidden sheet; another spreadsheet goes as a CSV. */
 export function parseWorkbook(sheets: SheetData[]): ParsedFile {
   const meta = sheets.find((sheet) => sheet.sheet === "_meta");
-  const version = meta?.data[0]?.[0];
-  if (meta !== undefined && version !== templateVersion) {
+  const sheet = sheets.find((candidate) => candidate.sheet === invoiceSheet);
+  if (meta === undefined || sheet === undefined) {
+    return {
+      ok: false,
+      message:
+        "Este Excel no es la plantilla de Cetus. Descarga la plantilla y copia allí tus facturas, o guarda tu archivo como .csv con sus columnas.",
+    };
+  }
+  if (meta.data[0]?.[0] !== templateVersion) {
     return {
       ok: false,
       message:
         "El archivo es de una versión anterior de la plantilla. Descarga la plantilla nueva y copia allí tus facturas.",
     };
-  }
-  const sheet = sheets.find((candidate) => candidate.sheet === invoiceSheet) ?? sheets[0];
-  if (sheet === undefined) {
-    return { ok: false, message: "El archivo no tiene hojas." };
   }
   return parseTable(sheet.data);
 }
@@ -252,6 +254,7 @@ function readInvoice(
     const unitCode = field("unitCode", optional(unitOf), row);
     const unitPrice = field("unitPrice", optional(decimal), row);
     const tax = field("tax", optional(list(taxOptions)), row);
+    const consumptionTax = field("consumptionTax", optional(list(consumptionTaxOptions)), row);
     if (productCode === null && description === null) {
       fail(row.number, "description", "Sin código de producto, escribe la descripción.");
     }
@@ -268,7 +271,8 @@ function readInvoice(
       quantity === null ||
       unitCode === undefined ||
       unitPrice === undefined ||
-      tax === undefined
+      tax === undefined ||
+      consumptionTax === undefined
     ) {
       return undefined;
     }
@@ -278,7 +282,14 @@ function readInvoice(
       quantity,
       ...(unitCode === null ? {} : { unitCode }),
       ...(unitPrice === null ? {} : { unitPrice }),
-      ...(tax === null ? {} : { taxes: taxPresets[tax].taxes }),
+      ...(tax === null && consumptionTax === null
+        ? {}
+        : {
+            taxes: [
+              ...(tax === null ? [] : taxPresets[tax].taxes),
+              ...(consumptionTax === null ? [] : taxPresets[consumptionTax].taxes),
+            ],
+          }),
     };
   });
 
@@ -296,7 +307,7 @@ function readInvoice(
   ) {
     return { reference, rows, item: null, errors };
   }
-  const validLines = lines.filter((line): line is BatchLine => line !== undefined);
+  const linesValid = lines.filter((line): line is BatchLine => line !== undefined);
   return {
     reference,
     rows,
@@ -318,7 +329,7 @@ function readInvoice(
         ...(phone ? { phone } : {}),
       },
       payment: { method, meansCode, ...(dueDate ? { dueDate } : {}) },
-      lines: validLines,
+      lines: linesValid,
       ...(notes ? { notes: [notes] } : {}),
     },
   };
@@ -330,11 +341,11 @@ function readInvoice(
  */
 export function locate(error: BatchError, sent: ParsedInvoice[]): RowError {
   const invoice = sent[error.index];
-  const firstRow = invoice?.rows[0] ?? 0;
+  const rowFirst = invoice?.rows[0] ?? 0;
   const field = error.field ?? "";
   const line = /^lines\[(\d+)\]\.?(.*)$/.exec(field);
   if (line) {
-    const row = invoice?.rows[Number(line[1])] ?? firstRow;
+    const row = invoice?.rows[Number(line[1])] ?? rowFirst;
     return {
       row,
       column: lineColumns[line[2]?.split(".")[0] ?? ""] ?? null,
@@ -342,7 +353,7 @@ export function locate(error: BatchError, sent: ParsedInvoice[]): RowError {
     };
   }
   return {
-    row: firstRow,
+    row: rowFirst,
     column: invoiceColumns[field] ?? invoiceColumns[field.split(".").slice(0, 2).join(".")] ?? null,
     message: error.message,
   };
@@ -412,7 +423,6 @@ function pattern(regex: RegExp, message: string) {
     regex.test(text(cell)) ? ok(text(cell)) : failure(message);
 }
 
-/** A label of the list or its code, whatever the case and the accents. */
 function list<Code extends string>(options: readonly Option<Code>[]) {
   const byKey = new Map<string, Code>();
   for (const option of options) {

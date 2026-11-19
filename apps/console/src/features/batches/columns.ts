@@ -13,7 +13,6 @@ export const templateVersion = "facturas-v1";
 
 export const templatePath = "/plantillas/facturas-v1.xlsx";
 
-/** The sheet with the invoices, one row per line. */
 export const invoiceSheet = "Facturas";
 
 /**
@@ -42,12 +41,12 @@ export const columns = [
   { key: "unitCode", header: "Unidad", invoice: false },
   { key: "unitPrice", header: "Precio unitario", invoice: false },
   { key: "tax", header: "IVA", invoice: false },
+  { key: "consumptionTax", header: "Impuesto al consumo", invoice: false },
   { key: "notes", header: "Notas", invoice: true },
 ] as const;
 
 export type ColumnKey = (typeof columns)[number]["key"];
 
-/** The header of a column, as the template and a CSV name it. */
 export function header(key: ColumnKey): string {
   const column = columns.find((candidate) => candidate.key === key);
   if (column === undefined) {
@@ -90,7 +89,13 @@ export const paymentMeansOptions = paymentMeans.map((means) => ({
   code: means.code,
 }));
 
-export const taxOptions = taxPresetIds.map((code) => ({ label: taxPresets[code].label, code }));
+export const taxOptions = taxPresetIds
+  .filter((code) => taxPresets[code].taxes.every((tax) => tax.type === "IVA"))
+  .map((code) => ({ label: taxPresets[code].label, code }));
+
+export const consumptionTaxOptions = taxPresetIds
+  .filter((code) => taxPresets[code].taxes.some((tax) => tax.type === "INC"))
+  .map((code) => ({ label: taxPresets[code].label, code }));
 
 /** The usual units of measure (annex table 13.3.6); any other DIAN code is accepted as typed. */
 export const unitOptions = [

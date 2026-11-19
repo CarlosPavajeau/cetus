@@ -71,7 +71,7 @@ export function BatchUpload({
   const [reading, setReading] = useState(false);
   const [file, setFile] = useState<ReadFile | null>(null);
   // Errors the API found, by reference, merged with the file's so the same choice excludes them.
-  const [apiErrors, setApiErrors] = useState<Map<string, RowError[]>>(new Map());
+  const [errorsApi, setErrorsApi] = useState<Map<string, RowError[]>>(new Map());
   const [excludeInvalid, setExcludeInvalid] = useState(false);
   const [sameFile, setSameFile] = useState<{ createdAt: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -92,7 +92,7 @@ export function BatchUpload({
           const reference = sent[error.index]?.reference ?? "";
           byReference.set(reference, [...(byReference.get(reference) ?? []), locate(error, sent)]);
         }
-        setApiErrors(byReference);
+        setErrorsApi(byReference);
         setExcludeInvalid(false);
         return;
       }
@@ -108,7 +108,7 @@ export function BatchUpload({
   const invoices = invoicesOf(file);
   const errorsOf = (invoice: ParsedInvoice) => [
     ...invoice.errors,
-    ...(apiErrors.get(invoice.reference) ?? []),
+    ...(errorsApi.get(invoice.reference) ?? []),
   ];
   const valid = invoices.filter(
     (invoice) => invoice.item !== null && errorsOf(invoice).length === 0,
@@ -132,7 +132,7 @@ export function BatchUpload({
     }
     setReading(true);
     setFile(null);
-    setApiErrors(new Map());
+    setErrorsApi(new Map());
     setExcludeInvalid(false);
     setSameFile(null);
     send.reset();
@@ -143,6 +143,12 @@ export function BatchUpload({
       if (read.ok && issuerId) {
         await warnSameFile(issuerId, read.sha256);
       }
+    } catch {
+      setFile({
+        ok: false,
+        message: "No pudimos leer el archivo. Revisa que sea la plantilla en .xlsx o un .csv.",
+        fileName: chosen.name,
+      });
     } finally {
       setReading(false);
     }
