@@ -79,7 +79,7 @@ public class BatchExpansion {
      * Creates the documents of the next items without one, in order of position.
      *
      * @return how many it created; 0 when no item is left
-     * @throws DomainException when the issuer cannot issue or its ranges ran out
+     * @throws DomainException when the issuer cannot issue, its ranges ran out or its range waits for a technical key
      * @throws com.cantte.cetus.credits.CreditRefused when the account ran out of credits
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -104,15 +104,25 @@ public class BatchExpansion {
         ZonedDateTime now = ZonedDateTime.now(clock.withZone(DianTime.ZONE)).truncatedTo(ChronoUnit.SECONDS);
         NumberingRangeEntity range =
                 DocumentEntity.lockRange(issuer, batch.environment, DocumentType.INVOICE, now.toLocalDate());
+        if (range.remaining() == 0) {
+            throw new DomainException(
+                    "no_active_numbering_range", "The issuer's active numbering range has no numbers");
+        }
+        long capacity = Long.MAX_VALUE;
         if (batch.environment == Environment.LIVE) {
             // The range first, as a single invoice takes them, and both before any document references the batch:
             // whoever closes the batch holds the credits lock while it waits for the batch.
             credits.lock(batch.accountId);
+            capacity = credits.capacity(batch.accountId, now.toOffsetDateTime());
         }
         int created = 0;
         for (DocumentBatchItemEntity item : items) {
             if (range.remaining() == 0) {
                 // The next range waits for the next block: taking it while holding the credits would invert the order.
+                break;
+            }
+            if (created > 0 && created >= capacity) {
+                // A refusal rolls back the whole block, so it is left to the first item of the next one.
                 break;
             }
             DocumentEntity doc = document(batch, issuer, range, item, now);

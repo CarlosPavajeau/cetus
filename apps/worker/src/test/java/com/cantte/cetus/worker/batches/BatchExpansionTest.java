@@ -1,8 +1,10 @@
 package com.cantte.cetus.worker.batches;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.DocumentStatus;
@@ -99,14 +101,17 @@ class BatchExpansionTest {
     }
 
     @Test
-    void runningOutOfCreditsStopsTheBatchWithoutGapsAndClosesItAsPartial() {
+    void runningOutOfCreditsIssuesWhatTheCreditsCoverWithoutGapsAndClosesTheBatchAsPartial() {
         Batch batch = batch(Environment.LIVE, 250);
         grant(batch.accountId(), 150);
+        long capacity =
+                QuarkusTransaction.requiringNew().call(() -> ledger.capacity(batch.accountId(), OffsetDateTime.now()));
 
         handler.handle(job(batch.id()));
 
         List<DocumentEntity> documents = documents(batch.id());
-        assertThat(documents).hasSize(100);
+        assertThat(capacity).isBetween(150L, 249L);
+        assertThat(documents).hasSize((int) capacity);
         assertConsecutive(documents);
         assertThat(nextNumber(batch.issuerId())).isEqualTo(documents.getLast().number + 1);
         assertThat(pendingPayloads(batch.id())).isZero();
@@ -116,6 +121,44 @@ class BatchExpansionTest {
 
         documents.forEach(doc -> recorder.gaveUp(doc.id, "Prueba"));
         assertThat(find(batch.id()).status).isEqualTo(DocumentBatchEntity.Status.PARTIAL);
+    }
+
+    @Test
+    void aRangeWaitingForItsTechnicalKeyLeavesTheBatchForTheJobToRetry() {
+        Batch batch = batch(Environment.LIVE, 2);
+        grant(batch.accountId(), 2);
+        UUID rangeId = range(batch.issuerId()).id;
+        byte[] key = range(batch.issuerId()).technicalKeySealed;
+        QuarkusTransaction.requiringNew()
+                .run(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(rangeId).technicalKeySealed = null);
+
+        assertThatThrownBy(() -> handler.handle(job(batch.id())))
+                .isInstanceOf(DomainException.class)
+                .hasFieldOrPropertyWithValue("code", "technical_key_pending");
+        assertThat(find(batch.id()).status).isEqualTo(DocumentBatchEntity.Status.EXPANDING);
+        assertThat(pendingPayloads(batch.id())).isEqualTo(2);
+
+        QuarkusTransaction.requiringNew()
+                .run(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(rangeId).technicalKeySealed = key);
+        handler.handle(job(batch.id()));
+        assertThat(documents(batch.id())).hasSize(2);
+    }
+
+    @Test
+    void aRangeLeftActiveWithoutNumbersStopsTheBatchInsteadOfCompletingIt() {
+        Batch batch = batch(Environment.TEST, 2);
+        UUID rangeId = range(batch.issuerId()).id;
+        QuarkusTransaction.requiringNew().run(() -> {
+            NumberingRangeEntity range = NumberingRangeEntity.findById(rangeId);
+            range.nextNumber = range.rangeTo + 1;
+        });
+
+        handler.handle(job(batch.id()));
+
+        DocumentBatchEntity stopped = find(batch.id());
+        assertThat(stopped.status).isEqualTo(DocumentBatchEntity.Status.FAILED);
+        assertThat(stopped.stopReason).isEqualTo("no_active_numbering_range");
+        assertThat(pendingPayloads(batch.id())).isZero();
     }
 
     @Test
@@ -283,11 +326,14 @@ class BatchExpansionTest {
     }
 
     private static long nextNumber(UUID issuerId) {
+        return range(issuerId).nextNumber;
+    }
+
+    private static NumberingRangeEntity range(UUID issuerId) {
         return QuarkusTransaction.requiringNew()
                 .call(() -> NumberingRangeEntity.<NumberingRangeEntity>find(
                                 "issuerId = ?1 and documentType = ?2", issuerId, DocumentType.INVOICE)
-                        .singleResult()
-                        .nextNumber);
+                        .singleResult());
     }
 
     private static long jobs(String type, List<DocumentEntity> documents) {

@@ -8,16 +8,20 @@ import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Set;
 
 /**
  * Creates a batch's documents a block at a time. A run that dies or loses its job leaves every committed block in
  * place; the next run goes on from the first item without a document. The account running out of credits or the
- * issuer out of numbers stops the batch, which closes as PARTIAL.
+ * issuer out of numbers stops the batch, which closes as PARTIAL; a range waiting for its technical key fails the run,
+ * so the job retries it later.
  */
 @ApplicationScoped
 public class ExpandBatchHandler implements JobHandler {
 
     static final String EXPANSION_FAILED = "expansion_failed";
+
+    private static final Set<String> TRANSIENT = Set.of("technical_key_pending");
 
     @Inject
     BatchExpansion expansion;
@@ -44,6 +48,9 @@ public class ExpandBatchHandler implements JobHandler {
                 expansion.stop(job.referenceId, e.reason.code);
                 return;
             } catch (DomainException e) {
+                if (TRANSIENT.contains(e.code())) {
+                    throw e;
+                }
                 expansion.stop(job.referenceId, e.code());
                 return;
             }
