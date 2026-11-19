@@ -174,7 +174,6 @@ export const listBatches = createServerFn({ method: "GET" })
     api.get("/console/document-batches", { params: { query: { ...data, limit: 20 } } }),
   );
 
-/** One batch, or null when it does not exist or belongs to another account. */
 export const getBatch = createServerFn({ method: "GET" })
   .validator(type({ id: "string.uuid" }))
   .handler(async ({ data }): Promise<BatchView | null> => {
@@ -196,7 +195,6 @@ export const listBatchDocuments = createServerFn({ method: "GET" })
     }),
   );
 
-/** The batch's result as the CSV the API writes, for the browser to save. */
 export const getBatchResult = createServerFn({ method: "GET" })
   .validator(type({ id: "string.uuid" }))
   .handler(async ({ data }): Promise<string> => {

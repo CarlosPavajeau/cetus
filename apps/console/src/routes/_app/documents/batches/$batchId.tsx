@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { BatchStatusBadge } from "~/features/batches/BatchStatusBadge";
-import { finished, progressOf, statusesOpen, stopReasonText } from "~/features/batches/labels";
+import { countFinished, progressOf, statusesOpen, stopReasonText } from "~/features/batches/labels";
 import { batchDocumentsKey, batchDocumentsQuery, batchQuery } from "~/features/batches/queries";
 import { getBatchResult } from "~/features/batches/server";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
@@ -70,7 +70,7 @@ function BatchDetail({ batch }: { batch: BatchView }) {
     batchDocumentsQuery(batch.id),
   );
   const queryClient = useQueryClient();
-  const progress = `${batch.status}:${finished(batch.counts)}:${batch.counts.notCreated}`;
+  const progress = `${batch.status}:${countFinished(batch.counts)}:${batch.counts.notCreated}`;
   const progressSeen = useRef(progress);
   useEffect(() => {
     if (progressSeen.current === progress) {
@@ -152,7 +152,7 @@ function BatchDetail({ batch }: { batch: BatchView }) {
           <p className="text-sm text-muted-foreground tabular-nums">
             {batch.status === "RECEIVED"
               ? "En espera: las facturas se crean en unos segundos."
-              : `${finished(batch.counts)} de ${batch.items} ${batch.items === 1 ? "factura terminada" : "facturas terminadas"}.`}
+              : `${countFinished(batch.counts)} de ${batch.items} ${batch.items === 1 ? "factura terminada" : "facturas terminadas"}.`}
             {open && " Te enviamos un correo cuando el lote termine."}
           </p>
         </div>

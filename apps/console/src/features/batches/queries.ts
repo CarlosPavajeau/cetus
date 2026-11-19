@@ -7,7 +7,6 @@ import { getBatch, listBatchDocuments, listBatches } from "./server";
 
 export const batchesKey = ["batches"] as const;
 
-/** Every few seconds while a batch is open, so its progress moves without reloading. */
 const pollMs = 3000;
 
 export function batchesQuery(environment: Environment) {

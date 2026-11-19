@@ -8,10 +8,12 @@ import { expect, open, test } from "./fixtures";
 
 const headers = columns.map((column) => column.header);
 
+type Row = Partial<Record<(typeof headers)[number], string>>;
+
 /** A CSV of the template's columns, separated by semicolons as Excel in Spanish exports it. */
-function csv(rows: Record<string, string>[]) {
+function csv(rows: Row[]) {
   const lines = rows.map((values) => headers.map((header) => values[header] ?? "").join(";"));
-  return Buffer.from(`﻿${[headers.join(";"), ...lines].join("\r\n")}`, "utf-8");
+  return Buffer.from(`\uFEFF${[headers.join(";"), ...lines].join("\r\n")}`, "utf-8");
 }
 
 function accepted(page: Page) {
@@ -21,15 +23,17 @@ function accepted(page: Page) {
     .locator("+ dd");
 }
 
-const customer = {
-  "Tipo de identificación": "NIT",
-  "Número de identificación": "900123456",
-  "Tipo de persona": "Persona jurídica",
-  "Nombre o razón social": "Inmobiliaria Andina SAS",
-  "Régimen de IVA": "Responsable de IVA",
-  "Forma de pago": "De contado",
-  "Medio de pago": "Transferencia bancaria",
-};
+function customer(): Row {
+  return {
+    "Tipo de identificación": "NIT",
+    "Número de identificación": uniqueNit(),
+    "Tipo de persona": "Persona jurídica",
+    "Nombre o razón social": "Inmobiliaria Andina SAS",
+    "Régimen de IVA": "Responsable de IVA",
+    "Forma de pago": "De contado",
+    "Medio de pago": "Transferencia bancaria",
+  };
+}
 
 test("a batch from a file is issued and followed until it completes", async ({
   page,
@@ -60,7 +64,7 @@ test("a batch from a file is issued and followed until it completes", async ({
     mimeType: "text/csv",
     buffer: csv([
       {
-        ...customer,
+        ...customer(),
         Referencia: "ARR-1",
         Descripción: "Arriendo",
         Cantidad: "1",
@@ -74,9 +78,9 @@ test("a batch from a file is issued and followed until it completes", async ({
         "Precio unitario": "150000",
         IVA: "IVA 19 %",
       },
-      { ...customer, Referencia: "ARR-2", "Código de producto": product.code, Cantidad: "1" },
+      { ...customer(), Referencia: "ARR-2", "Código de producto": product.code, Cantidad: "1" },
       {
-        ...customer,
+        ...customer(),
         Referencia: "ARR-3",
         Descripción: "Arriendo",
         Cantidad: "1,5",
@@ -108,7 +112,7 @@ test("the invoices with errors are excluded and the others are issued", async ({
     mimeType: "text/csv",
     buffer: csv([
       {
-        ...customer,
+        ...customer(),
         Referencia: "OK-1",
         Descripción: "Servicio",
         Cantidad: "1",
@@ -116,14 +120,14 @@ test("the invoices with errors are excluded and the others are issued", async ({
         IVA: "IVA 19 %",
       },
       {
-        ...customer,
+        ...customer(),
         Referencia: "MAL-1",
         Descripción: "Servicio",
         Cantidad: "cero",
         "Precio unitario": "100000",
       },
       {
-        ...customer,
+        ...customer(),
         Referencia: "MAL-2",
         "Nombre o razón social": "<b>Cliente</b>",
         "Medio de pago": "",

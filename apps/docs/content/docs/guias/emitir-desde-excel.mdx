@@ -48,7 +48,7 @@ navegador: nada se envía hasta que confirmas. Antes verás:
   solo las demás.
 - Un aviso si ya enviaste el mismo archivo con ese emisor en las últimas 24 horas.
 
-Al confirmar, Cetus vuelve a validar todo: el emisor, los catálogos, el rango de numeración y tus créditos
+Al confirmar, Cetus vuelve a validar todo: el emisor, los catálogos, el rango de numeración (los números que la DIAN le autorizó al emisor) y tus créditos
 (en producción) o el tope diario (en simulación). Si una sola factura no es válida, **no se recibe ninguna
 ni se toma ningún número**, y los errores aparecen en sus filas.
 
@@ -76,5 +76,5 @@ número, el CUFE (el código único que la DIAN le da a cada factura), el estado
 | Fallido          | El lote se detuvo sin crear ninguna factura.                                      |
 
 Un lote se detiene si, mientras crea las facturas, se acaban los créditos de la cuenta o los números del
-rango, o el emisor deja de estar habilitado. Las facturas que faltaban **no se numeran**: el resultado dice
+rango, o el emisor deja de estar habilitado (autorizado por la DIAN para facturar). Las facturas que faltaban **no se numeran**: el resultado dice
 cuáles son, para que las envíes en otro lote cuando resuelvas la causa.

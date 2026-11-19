@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { BatchStatusBadge } from "~/features/batches/BatchStatusBadge";
-import { finished, progressOf } from "~/features/batches/labels";
+import { countFinished, progressOf } from "~/features/batches/labels";
 import { batchesQuery } from "~/features/batches/queries";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
@@ -138,7 +138,7 @@ function BatchRow({ batch }: { batch: BatchView }) {
         <div className="flex flex-col gap-1">
           <Progress value={progressOf(batch)} aria-label="Avance del lote" />
           <span className="text-2xs text-muted-foreground tabular-nums">
-            {finished(batch.counts)} de {batch.items}
+            {countFinished(batch.counts)} de {batch.items}
           </span>
         </div>
       </TableCell>

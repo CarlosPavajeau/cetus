@@ -21,7 +21,6 @@ export const batchBadgeStatus: Record<BatchStatus, BadgeStatus> = {
   FAILED: "error",
 };
 
-/** Why a batch stopped creating invoices, in the person's words; the API's code otherwise. */
 const stopReasons: Record<string, string> = {
   insufficient_credits: "Se acabaron los créditos de la cuenta.",
   overage_limit_reached: "La suscripción llegó a su límite de excedente.",
@@ -36,7 +35,7 @@ export function stopReasonText(reason: string) {
   return stopReasons[reason] ?? `Se detuvo (${reason}).`;
 }
 
-export function finished(counts: BatchCounts) {
+export function countFinished(counts: BatchCounts) {
   return counts.accepted + counts.rejected + counts.failed;
 }
 
@@ -45,5 +44,5 @@ export function progressOf(batch: Pick<BatchView, "items" | "counts" | "status">
   const expected = statusesOpen.includes(batch.status)
     ? batch.items
     : batch.items - batch.counts.notCreated;
-  return expected === 0 ? 0 : Math.round((finished(batch.counts) / expected) * 100);
+  return expected === 0 ? 0 : Math.round((countFinished(batch.counts) / expected) * 100);
 }
