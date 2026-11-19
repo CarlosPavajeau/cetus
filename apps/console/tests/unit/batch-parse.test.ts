@@ -243,6 +243,10 @@ describe("parseTable", () => {
         row({ ...customer, ...line, Referencia: "R".repeat(41) }),
         row({ ...customer, ...line, Referencia: "B", "Precio unitario": -100 }),
         row({ ...customer, ...line, Referencia: "C", Email: `${"a".repeat(250)}@x.co` }),
+        row({ ...customer, ...line, Referencia: "D", Email: "josé.peña@empresa.co" }),
+        row({ ...customer, ...line, Referencia: "E", Cantidad: 1e15 }),
+        row({ ...customer, ...line, Referencia: "F\n2" }),
+        row({ ...customer, ...line, Referencia: "G", "Código de producto": "P\t1" }),
       ]),
     );
 
@@ -252,6 +256,10 @@ describe("parseTable", () => {
       [null, ["Referencia"]],
       [null, ["Precio unitario"]],
       [null, ["Email"]],
+      [null, ["Email"]],
+      [null, ["Cantidad"]],
+      [null, ["Referencia"]],
+      [null, ["Código de producto"]],
     ]);
   });
 
@@ -309,10 +317,15 @@ describe("parseCsv", () => {
   });
 
   it("numbers rows as the file does, blank lines included", () => {
-    const [header, invoice] = csv(",").split("\r\n");
-    const parsed = invoices(parseCsv([header, "", invoice?.replace("Arriendo", "")].join("\r\n")));
-    expect(parsed[0]?.rows).toEqual([3]);
-    expect(parsed[0]?.errors).toEqual([expect.objectContaining({ row: 3, column: "Descripción" })]);
+    for (const separator of [",", ";"]) {
+      const [header, invoice] = csv(separator).split("\r\n");
+      const lines = [header, "", "", "", invoice?.replace("Arriendo", ""), ""];
+      const parsed = invoices(parseCsv(lines.join("\r\n")));
+      expect(parsed[0]?.rows).toEqual([5]);
+      expect(parsed[0]?.errors).toEqual([
+        expect.objectContaining({ row: 5, column: "Descripción" }),
+      ]);
+    }
   });
 });
 

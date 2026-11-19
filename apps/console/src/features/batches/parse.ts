@@ -78,10 +78,15 @@ export function parseWorkbook(sheets: SheetData[]): ParsedFile {
 
 /** A CSV with the template's headers, separated by commas or semicolons, in UTF-8 with or without BOM. */
 export function parseCsv(content: string): ParsedFile {
-  // Blank lines stay so rows keep the spreadsheet's numbers; parseTable skips them. The file size bounds the work.
-  const result = Papa.parse<string[]>(content.replace(/^﻿/, ""), {
+  const body = content.replace(/^﻿/, "");
+  // Papa guesses the delimiter badly when blank lines count, but they must stay so rows keep the spreadsheet's
+  // numbers (parseTable skips them). The file size bounds the work.
+  const { delimiter } = Papa.parse<string[]>(body, {
     delimitersToGuess: [",", ";"],
-  });
+    skipEmptyLines: "greedy",
+    preview: 20,
+  }).meta;
+  const result = Papa.parse<string[]>(body, { delimiter });
   if (result.data.every((cells) => cells.every((cell) => cell.trim() === ""))) {
     return { ok: false, message: "El archivo está vacío." };
   }
@@ -177,8 +182,9 @@ function readInvoice(
       }
     }
   }
-  if (reference.length > referenceLengthMax) {
-    fail(first.number, "reference", `Escribe hasta ${referenceLengthMax} caracteres.`);
+  const referenceParsed = singleLine(referenceLengthMax)(reference);
+  if (!referenceParsed.ok) {
+    fail(first.number, "reference", referenceParsed.message);
   }
   if (group.length > linesMax) {
     fail(first.number, null, `La factura tiene más de ${linesMax} líneas.`);
@@ -208,7 +214,12 @@ function readInvoice(
   const addressLine = field("addressLine", optional(plain(300)));
   const email = field(
     "email",
-    optional(pattern(/^(?=.{1,254}$)[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Escribe un correo válido.")),
+    optional(
+      pattern(
+        /^(?=.{1,254}$)[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+        "Escribe un correo válido, sin tildes ni ñ.",
+      ),
+    ),
   );
   const phone = field(
     "phone",
@@ -235,7 +246,7 @@ function readInvoice(
   }
 
   const lines = group.map((row): BatchLine | undefined => {
-    const productCode = field("productCode", optional(plain(50)), row);
+    const productCode = field("productCode", optional(singleLine(50)), row);
     const description = field("description", optional(plain(300)), row);
     const quantity = field("quantity", required(decimal), row);
     const unitCode = field("unitCode", optional(unitOf), row);
@@ -388,6 +399,14 @@ function plain(max: number) {
   };
 }
 
+/** Text without line breaks, tabs or other control characters inside. */
+function singleLine(max: number) {
+  return (cell: Cell): Parsed<string> =>
+    /\p{Cc}/u.test(text(cell))
+      ? failure("Quita los saltos de línea y las tabulaciones.")
+      : plain(max)(cell);
+}
+
 function pattern(regex: RegExp, message: string) {
   return (cell: Cell): Parsed<string> =>
     regex.test(text(cell)) ? ok(text(cell)) : failure(message);
@@ -459,6 +478,9 @@ function decimal(cell: Cell): Parsed<number> {
   if (typeof cell === "number") {
     if (!Number.isFinite(cell)) {
       return failure("Escribe un número.");
+    }
+    if (cell >= 1e14) {
+      return failure("Escribe un número de hasta 14 cifras enteras.");
     }
     return cell < 0
       ? failure("Escribe un número mayor o igual a cero.")

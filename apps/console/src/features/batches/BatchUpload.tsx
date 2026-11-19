@@ -407,7 +407,9 @@ function Summary({ invoices, rowCount }: { invoices: ParsedInvoice[]; rowCount: 
         <dd className="text-lg tabular-nums">
           {formatMoney(total, "COP")}
           {fromCatalog && (
-            <span className="block text-xs text-muted-foreground">sin las líneas del catálogo</span>
+            <span className="block text-xs text-muted-foreground">
+              sin lo que completa el catálogo
+            </span>
           )}
         </dd>
       </div>
@@ -434,7 +436,7 @@ function completedByCatalog(line: BatchLine) {
 
 function itemTotal(item: BatchItem) {
   return item.lines.reduce((sum, line) => {
-    if (line.unitPrice === undefined || completedByCatalog(line)) {
+    if (line.unitPrice === undefined) {
       return sum;
     }
     const base = line.quantity * line.unitPrice;
