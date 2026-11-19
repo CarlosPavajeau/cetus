@@ -69,8 +69,8 @@ function NewBatch() {
           environment={environment}
           issuers={usable}
           blockedReason={blockedReason}
-          onSent={async () => {
-            await navigate({ to: "/documents" });
+          onSent={async (batchId) => {
+            await navigate({ to: "/documents/batches/$batchId", params: { batchId } });
           }}
         />
       )}

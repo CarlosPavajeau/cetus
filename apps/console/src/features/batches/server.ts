@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 
 import { CetusApiError, api } from "~/lib/api/client";
-import type { BatchError, SameFileResult } from "~/lib/api/types";
+import type {
+  BatchDocumentPage,
+  BatchError,
+  BatchPage,
+  BatchView,
+  SameFileResult,
+} from "~/lib/api/types";
 
 // The browser reads the file; these only forward what it found. The API validates every item again.
 
@@ -159,3 +165,49 @@ export const findSameFile = createServerFn({ method: "GET" })
   .handler(({ data }): Promise<SameFileResult> =>
     api.get("/console/document-batches/same-file", { params: { query: data } }),
   );
+
+/** The account's batches in the environment, newest first. */
+export const listBatches = createServerFn({ method: "GET" })
+  .validator(
+    type({ environment: "'SANDBOX' | 'TEST' | 'LIVE'", "before?": "string.uuid | undefined" }),
+  )
+  .handler(({ data }): Promise<BatchPage> =>
+    api.get("/console/document-batches", { params: { query: { ...data, limit: 20 } } }),
+  );
+
+/** One batch, or null when it does not exist or belongs to another account. */
+export const getBatch = createServerFn({ method: "GET" })
+  .validator(type({ id: "string.uuid" }))
+  .handler(async ({ data }): Promise<BatchView | null> => {
+    try {
+      return await api.get("/console/document-batches/{id}", { params: { path: { id: data.id } } });
+    } catch (error) {
+      if (error instanceof CetusApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  });
+
+/** The batch's documents by position. */
+export const listBatchDocuments = createServerFn({ method: "GET" })
+  .validator(type({ id: "string.uuid", "after?": "number.integer >= 0 | undefined" }))
+  .handler(({ data }): Promise<BatchDocumentPage> =>
+    api.get("/console/document-batches/{id}/documents", {
+      params: { path: { id: data.id }, query: { after: data.after, limit: 50 } },
+    }),
+  );
+
+/** The batch's result as the CSV the API writes, for the browser to save. */
+export const getBatchResult = createServerFn({ method: "GET" })
+  .validator(type({ id: "string.uuid" }))
+  .handler(async ({ data }): Promise<string> => {
+    const csv: unknown = await api.get("/console/document-batches/{id}/result.csv", {
+      params: { path: { id: data.id } },
+      parseAs: "text",
+    });
+    if (typeof csv !== "string") {
+      throw new Error("The batch result is not text");
+    }
+    return csv;
+  });

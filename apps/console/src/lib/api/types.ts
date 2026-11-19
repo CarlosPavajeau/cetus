@@ -352,3 +352,5 @@ export type BatchDocument = Schemas["BatchDocument"];
 export type BatchDocumentPage = Schemas["BatchDocumentPage"];
 
 export type SameFileResult = Schemas["SameFileResult"];
+
+export type BatchCounts = Schemas["BatchCounts"];

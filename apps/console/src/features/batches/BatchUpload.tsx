@@ -42,6 +42,7 @@ import { cn } from "~/lib/utils";
 
 import { templatePath } from "./columns";
 import { locate, type ParsedInvoice, type RowError } from "./parse";
+import { batchesKey } from "./queries";
 import { readBatchFile, type ReadFile } from "./readBatchFile";
 import { findSameFile, sendBatch } from "./server";
 
@@ -106,6 +107,7 @@ export function BatchUpload({
         return;
       }
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: batchesKey }),
         queryClient.invalidateQueries({ queryKey: documentsKey }),
         queryClient.invalidateQueries({ queryKey: auditLogKey }),
       ]);

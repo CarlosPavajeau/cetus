@@ -15,6 +15,7 @@ export const documentFilters = type({
   "type?": type.enumerated(...documentTypes).or("undefined"),
   "status?": type.enumerated(...documentStatuses).or("undefined"),
   "issuerId?": "string.uuid | undefined",
+  "batchId?": "string.uuid | undefined",
   "from?": "string.date.iso | undefined",
   "to?": "string.date.iso | undefined",
   "q?": "string <= 100 | undefined",
