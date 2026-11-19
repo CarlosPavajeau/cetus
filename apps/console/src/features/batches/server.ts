@@ -90,7 +90,11 @@ const messages: Record<string, string> = {
     "Al rango de numeración del emisor no le quedan números para todas estas facturas. Agrega un rango nuevo o divide el lote.",
   technical_key_pending:
     "Estamos trayendo la clave técnica del rango desde la DIAN. Vuelve a intentarlo en unos minutos.",
-  too_many_open_batches: "Tienes 5 lotes en curso. Espera a que uno termine para enviar otro.",
+  too_many_open_batches:
+    "Ya tienes el máximo de lotes en curso. Espera a que uno termine para enviar otro.",
+  batch_too_large:
+    "El lote es demasiado grande para enviarlo de una vez. Divídelo en varios archivos.",
+  rate_limited: "Enviaste varios lotes seguidos. Espera un minuto y vuelve a intentarlo.",
   no_active_product:
     "Tu cuenta no tiene una suscripción ni un paquete vigente para emitir en producción.",
   insufficient_credits:

@@ -75,7 +75,8 @@ export function BatchUpload({
   const [excludeInvalid, setExcludeInvalid] = useState(false);
   const [sameFile, setSameFile] = useState<{ createdAt: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
-  // One key per file until the API answers: a retry after a lost answer gets the same batch back.
+  // One key per request body until the API answers: a retry after a lost answer gets the same batch back, and a
+  // different body (another file, issuer or choice of invoices) gets a key of its own.
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const send = useMutation({
     mutationFn: sendBatch,
@@ -191,6 +192,7 @@ export function BatchUpload({
               onValueChange={(value) => {
                 const next = typeof value === "string" ? value : "";
                 setIssuerId(next);
+                setIdempotencyKey(crypto.randomUUID());
                 if (file?.ok && next) {
                   void warnSameFile(next, file.sha256);
                 }
@@ -297,7 +299,10 @@ export function BatchUpload({
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={excludeInvalid}
-                    onCheckedChange={(checked) => setExcludeInvalid(checked)}
+                    onCheckedChange={(checked) => {
+                      setExcludeInvalid(checked);
+                      setIdempotencyKey(crypto.randomUUID());
+                    }}
                   />
                   Excluir las {invalid.length} facturas con errores y emitir las otras{" "}
                   {valid.length}
