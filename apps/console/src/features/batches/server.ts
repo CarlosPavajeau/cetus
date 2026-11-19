@@ -166,7 +166,6 @@ export const findSameFile = createServerFn({ method: "GET" })
     api.get("/console/document-batches/same-file", { params: { query: data } }),
   );
 
-/** The account's batches in the environment, newest first. */
 export const listBatches = createServerFn({ method: "GET" })
   .validator(
     type({ environment: "'SANDBOX' | 'TEST' | 'LIVE'", "before?": "string.uuid | undefined" }),

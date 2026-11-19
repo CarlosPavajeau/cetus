@@ -1,6 +1,8 @@
 import type { BadgeStatus } from "~/components/ui/badge";
 import type { BatchCounts, BatchStatus, BatchView } from "~/lib/api/types";
 
+export const statusesOpen: readonly BatchStatus[] = ["RECEIVED", "EXPANDING", "PROCESSING"];
+
 export const batchStatusLabel: Record<BatchStatus, string> = {
   RECEIVED: "En espera",
   EXPANDING: "Creando facturas",
@@ -34,11 +36,14 @@ export function stopReasonText(reason: string) {
   return stopReasons[reason] ?? `Se detuvo (${reason}).`;
 }
 
-/** Documents that reached a final status, out of the batch's items. */
 export function finished(counts: BatchCounts) {
   return counts.accepted + counts.rejected + counts.failed;
 }
 
-export function progressOf(batch: Pick<BatchView, "items" | "counts">) {
-  return batch.items === 0 ? 0 : Math.round((finished(batch.counts) / batch.items) * 100);
+export function progressOf(batch: Pick<BatchView, "items" | "counts" | "status">) {
+  // A closed batch never creates the invoices it stopped before, so they do not hold its bar below 100 %.
+  const expected = statusesOpen.includes(batch.status)
+    ? batch.items
+    : batch.items - batch.counts.notCreated;
+  return expected === 0 ? 0 : Math.round((finished(batch.counts) / expected) * 100);
 }

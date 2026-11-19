@@ -1,12 +1,11 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 
-import type { BatchStatus, Environment } from "~/lib/api/types";
+import type { Environment } from "~/lib/api/types";
 
+import { statusesOpen } from "./labels";
 import { getBatch, listBatchDocuments, listBatches } from "./server";
 
 export const batchesKey = ["batches"] as const;
-
-export const openStatuses: readonly BatchStatus[] = ["RECEIVED", "EXPANDING", "PROCESSING"];
 
 /** Every few seconds while a batch is open, so its progress moves without reloading. */
 const pollMs = 3000;
@@ -19,7 +18,7 @@ export function batchesQuery(environment: Environment) {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     refetchInterval: (query) =>
       query.state.data?.pages.some((page) =>
-        page.items.some((batch) => openStatuses.includes(batch.status)),
+        page.items.some((batch) => statusesOpen.includes(batch.status)),
       )
         ? pollMs
         : false,
@@ -32,17 +31,21 @@ export function batchQuery(id: string) {
     queryFn: () => getBatch({ data: { id } }),
     refetchInterval: (query) => {
       const batch = query.state.data;
-      return batch && openStatuses.includes(batch.status) ? pollMs : false;
+      return batch && statusesOpen.includes(batch.status) ? pollMs : false;
     },
   });
 }
 
-export function batchDocumentsQuery(id: string, open: boolean) {
+export function batchDocumentsKey(id: string) {
+  return [...batchesKey, id, "documents"] as const;
+}
+
+/** Not polled: every loaded page would refetch each time. The page refetches it when the batch's counts change. */
+export function batchDocumentsQuery(id: string) {
   return infiniteQueryOptions({
-    queryKey: [...batchesKey, id, "documents"],
+    queryKey: batchDocumentsKey(id),
     queryFn: ({ pageParam }) => listBatchDocuments({ data: { id, after: pageParam } }),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    refetchInterval: open ? pollMs : false,
   });
 }

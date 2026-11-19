@@ -1,6 +1,12 @@
-import { useMutation, useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { DownloadIcon, FileSearchIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -24,8 +30,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { BatchStatusBadge } from "~/features/batches/BatchStatusBadge";
-import { finished, progressOf, stopReasonText } from "~/features/batches/labels";
-import { batchDocumentsQuery, batchQuery, openStatuses } from "~/features/batches/queries";
+import { finished, progressOf, statusesOpen, stopReasonText } from "~/features/batches/labels";
+import { batchDocumentsKey, batchDocumentsQuery, batchQuery } from "~/features/batches/queries";
 import { getBatchResult } from "~/features/batches/server";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
@@ -59,10 +65,20 @@ function BatchPage() {
 }
 
 function BatchDetail({ batch }: { batch: BatchView }) {
-  const open = openStatuses.includes(batch.status);
+  const open = statusesOpen.includes(batch.status);
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    batchDocumentsQuery(batch.id, open),
+    batchDocumentsQuery(batch.id),
   );
+  const queryClient = useQueryClient();
+  const progress = `${batch.status}:${finished(batch.counts)}:${batch.counts.notCreated}`;
+  const progressSeen = useRef(progress);
+  useEffect(() => {
+    if (progressSeen.current === progress) {
+      return;
+    }
+    progressSeen.current = progress;
+    void queryClient.invalidateQueries({ queryKey: batchDocumentsKey(batch.id) });
+  }, [progress, batch.id, queryClient]);
   const documents = data.pages.flatMap((page) => page.items);
   const download = useMutation({
     mutationFn: async () => {
@@ -74,7 +90,7 @@ function BatchDetail({ batch }: { batch: BatchView }) {
       link.href = url;
       link.download = `${(batch.fileName ?? "lote").replace(/\.(xlsx|csv)$/i, "")}-resultado.csv`;
       link.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url));
     },
   });
   const counts = [
@@ -122,9 +138,10 @@ function BatchDetail({ batch }: { batch: BatchView }) {
         <Alert variant="destructive">
           <AlertTitle>El lote se detuvo antes de crear todas sus facturas</AlertTitle>
           <AlertDescription>
-            {stopReasonText(batch.stopReason)} Las {batch.counts.notCreated} facturas que faltan no
-            se numeraron: descarga el resultado para ver cuáles y envíalas en otro lote cuando
-            resuelvas la causa.
+            {stopReasonText(batch.stopReason)}{" "}
+            {batch.counts.notCreated === 1
+              ? "La factura que falta no se numeró: descarga el resultado para ver cuál y envíala en otro lote cuando resuelvas la causa."
+              : `Las ${batch.counts.notCreated} facturas que faltan no se numeraron: descarga el resultado para ver cuáles y envíalas en otro lote cuando resuelvas la causa.`}
           </AlertDescription>
         </Alert>
       )}
@@ -135,7 +152,7 @@ function BatchDetail({ batch }: { batch: BatchView }) {
           <p className="text-sm text-muted-foreground tabular-nums">
             {batch.status === "RECEIVED"
               ? "En espera: las facturas se crean en unos segundos."
-              : `${finished(batch.counts)} de ${batch.items} facturas terminadas.`}
+              : `${finished(batch.counts)} de ${batch.items} ${batch.items === 1 ? "factura terminada" : "facturas terminadas"}.`}
             {open && " Te enviamos un correo cuando el lote termine."}
           </p>
         </div>
