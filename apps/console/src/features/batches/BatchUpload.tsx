@@ -45,6 +45,9 @@ import { locate, type ParsedInvoice, type RowError } from "./parse";
 import { readBatchFile, type ReadFile } from "./readBatchFile";
 import { findSameFile, sendBatch } from "./server";
 
+/** Answers that leave the body unprocessed: the retry they ask for keeps its key, or the first request could land twice. */
+const codesRetryable = new Set(["idempotency_in_progress", "rate_limited"]);
+
 /** The table shows this many errors; the count tells how many more there are. */
 const errorsShownMax = 200;
 
@@ -85,6 +88,9 @@ export function BatchUpload({
     mutationFn: sendBatch,
     onSuccess: async (result, variables) => {
       setConfirming(false);
+      if (!result.ok && codesRetryable.has(result.code)) {
+        return;
+      }
       setIdempotencyKey(crypto.randomUUID());
       if (!result.ok) {
         const sent = invoicesOf(file).filter((invoice) =>
