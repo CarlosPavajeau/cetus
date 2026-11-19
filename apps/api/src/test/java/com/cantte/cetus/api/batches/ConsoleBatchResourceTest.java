@@ -10,6 +10,7 @@ import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.Credits;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.DocumentBatchItemEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -161,6 +162,40 @@ class ConsoleBatchResourceTest {
                 .header("Idempotent-Replayed", "true")
                 .body("id", equalTo(first));
         assertThat(list(user, "TEST").getList("items.id")).containsExactly(first);
+    }
+
+    @Test
+    void aSenderRemovedFromTheOrganizationStopsGettingTheBatchEmails() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Lote Remitente SAS");
+        String issuerId = onboard(user).issuerId();
+        String id = send(
+                        user,
+                        UUID.randomUUID().toString(),
+                        batch(issuerId, item("R-1", newCustomer("900888777", null), List.of(line(1, 5000)))))
+                .then()
+                .statusCode(202)
+                .extract()
+                .path("id");
+
+        user.member("biller")
+                .request()
+                .delete("/console/document-batches/senders/" + user.userId())
+                .then()
+                .statusCode(403);
+        assertThat(senderEmail(id)).isEqualTo(user.email());
+
+        user.member("admin")
+                .request()
+                .delete("/console/document-batches/senders/" + user.userId())
+                .then()
+                .statusCode(204);
+        assertThat(senderEmail(id)).isNull();
+    }
+
+    private static String senderEmail(String batchId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> DocumentBatchEntity.<DocumentBatchEntity>findById(UUID.fromString(batchId)).createdByEmail);
     }
 
     @Test

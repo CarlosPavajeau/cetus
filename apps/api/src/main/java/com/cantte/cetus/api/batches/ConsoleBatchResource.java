@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -148,8 +149,9 @@ public class ConsoleBatchResource {
         List<DocumentBatchEntity> rows = DocumentBatchEntity.pageForAccount(accountId, environment, before, size + 1);
         List<DocumentBatchEntity> page = rows.subList(0, Math.min(size, rows.size()));
         Map<UUID, String> issuerNames = issuerNames(page);
+        Map<UUID, DocumentBatchEntity.Counts> counts = DocumentBatchEntity.countsOf(page);
         List<BatchView> items = page.stream()
-                .map(batch -> BatchView.from(batch, issuerNames.getOrDefault(batch.issuerId, "")))
+                .map(batch -> BatchView.from(batch, issuerNames.getOrDefault(batch.issuerId, ""), counts.get(batch.id)))
                 .toList();
         return new BatchPage(items, rows.size() > size ? page.getLast().id : null);
     }
@@ -184,7 +186,16 @@ public class ConsoleBatchResource {
     public BatchView get(@PathParam("id") UUID id) {
         DocumentBatchEntity batch = find(id);
         IssuerEntity issuer = IssuerEntity.findById(batch.issuerId);
-        return BatchView.from(batch, issuer.legalName);
+        return BatchView.from(batch, issuer.legalName, batch.counts());
+    }
+
+    /** Someone removed from the organization: the batches they sent stop emailing them when they finish. */
+    @DELETE
+    @Path("/senders/{userId}")
+    @Transactional
+    @APIResponse(responseCode = "204", description = "No Content")
+    public void forgetSender(@PathParam("userId") @NotBlank @Size(max = 100) String userId) {
+        DocumentBatchEntity.forgetSender(context.accountId(), userId);
     }
 
     /** By position: pass the previous page's {@code nextCursor} as {@code after}. */

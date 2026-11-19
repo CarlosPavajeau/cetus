@@ -65,7 +65,7 @@ public final class BatchViews {
             @Schema(nullable = true) OffsetDateTime expandedAt,
             @Schema(nullable = true) OffsetDateTime completedAt) {
 
-        static BatchView from(DocumentBatchEntity batch, String issuerName) {
+        static BatchView from(DocumentBatchEntity batch, String issuerName, DocumentBatchEntity.Counts counts) {
             return new BatchView(
                     batch.id,
                     batch.issuerId,
@@ -74,7 +74,7 @@ public final class BatchViews {
                     Status.of(batch.status),
                     Source.valueOf(batch.source.name()),
                     batch.items,
-                    BatchCounts.of(batch.counts()),
+                    BatchCounts.of(counts),
                     batch.fileName,
                     batch.stopReason,
                     batch.createdAt,

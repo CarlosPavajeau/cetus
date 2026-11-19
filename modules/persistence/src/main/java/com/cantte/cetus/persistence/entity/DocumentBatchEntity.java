@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,6 +136,14 @@ public class DocumentBatchEntity extends PanacheEntityBase {
                 .list();
     }
 
+    /** The person left the account's organization: their batches stop emailing them. */
+    public static int forgetSender(UUID accountId, String userId) {
+        return update(
+                "createdByEmail = null where accountId = ?1 and createdBy = ?2 and createdByEmail is not null",
+                accountId,
+                userId);
+    }
+
     public static long countOpen(UUID accountId) {
         return count("accountId = ?1 and status in ?2", accountId, Status.OPEN);
     }
@@ -178,14 +187,30 @@ public class DocumentBatchEntity extends PanacheEntityBase {
     }
 
     public Counts counts() {
-        Map<DocumentStatus, Long> byStatus = new EnumMap<>(DocumentStatus.class);
+        return countsOf(List.of(this)).get(id);
+    }
+
+    /** The counts of every batch given, with one query. */
+    public static Map<UUID, Counts> countsOf(List<DocumentBatchEntity> batches) {
+        if (batches.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, Map<DocumentStatus, Long>> byBatch = new HashMap<>();
         getEntityManager()
                 .createQuery(
-                        "select d.status, count(d) from DocumentEntity d where d.batchId = :batch group by d.status",
+                        "select d.batchId, d.status, count(d) from DocumentEntity d where d.batchId in :batches"
+                                + " group by d.batchId, d.status",
                         Object[].class)
-                .setParameter("batch", id)
+                .setParameter("batches", batches.stream().map(batch -> batch.id).toList())
                 .getResultList()
-                .forEach(row -> byStatus.put((DocumentStatus) row[0], (Long) row[1]));
+                .forEach(row -> byBatch.computeIfAbsent((UUID) row[0], key -> new EnumMap<>(DocumentStatus.class))
+                        .put((DocumentStatus) row[1], (Long) row[2]));
+        Map<UUID, Counts> counts = new HashMap<>();
+        batches.forEach(batch -> counts.put(batch.id, batch.counts(byBatch.getOrDefault(batch.id, Map.of()))));
+        return counts;
+    }
+
+    private Counts counts(Map<DocumentStatus, Long> byStatus) {
         long accepted = byStatus.getOrDefault(DocumentStatus.ACCEPTED, 0L);
         long rejected = byStatus.getOrDefault(DocumentStatus.REJECTED, 0L);
         long failed = byStatus.getOrDefault(DocumentStatus.FAILED, 0L);

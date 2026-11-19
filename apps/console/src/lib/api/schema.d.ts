@@ -934,6 +934,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/document-batches/senders/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Forget Sender */
+        delete: operations["ConsoleBatchResource_forgetSender"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/document-batches/{id}": {
         parameters: {
             query?: never;
@@ -8539,6 +8556,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SameFileResult"];
                 };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_forgetSender: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Not Found */
             404: {

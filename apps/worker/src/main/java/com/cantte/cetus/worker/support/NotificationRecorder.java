@@ -4,6 +4,7 @@ import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity.Status;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -52,7 +53,7 @@ public class NotificationRecorder {
         NotificationKind kind = NotificationKind.valueOf(notification.kind);
         AccountEntity account = AccountEntity.findById(notification.accountId);
         List<String> recipients = kind == NotificationKind.BATCH_FINISHED
-                ? List.of(notification.data.get("email"))
+                ? batchSender(notification)
                 : kind.categories().isEmpty()
                         ? List.of()
                         : AccountContactEntity.emails(notification.accountId, kind.categories());
@@ -63,6 +64,12 @@ public class NotificationRecorder {
                 kind,
                 Map.copyOf(notification.data),
                 recipients));
+    }
+
+    /** Read when it is sent: whoever left the organization meanwhile no longer has an address on the batch. */
+    private static List<String> batchSender(NotificationEntity notification) {
+        DocumentBatchEntity batch = DocumentBatchEntity.findById(UUID.fromString(notification.data.get("batchId")));
+        return batch == null || batch.createdByEmail == null ? List.of() : List.of(batch.createdByEmail);
     }
 
     /**

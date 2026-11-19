@@ -26,6 +26,7 @@ import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
+import com.cantte.cetus.worker.support.NotificationRecorder;
 import com.cantte.cetus.worker.support.ResultRecorder;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -60,6 +61,9 @@ class BatchExpansionTest {
 
     @Inject
     CreditLedger ledger;
+
+    @Inject
+    NotificationRecorder notifications;
 
     @Test
     void theDocumentsFollowThePositionsAndARunAgainDuplicatesNone() {
@@ -182,6 +186,10 @@ class BatchExpansionTest {
                                 NotificationKind.BATCH_FINISHED.name())
                         .singleResult());
         assertThat(notice.data).containsEntry("email", "lotes@cetus.test").containsEntry("failed", "3");
+        assertThat(notifications.load(notice.id).orElseThrow().recipients()).containsExactly("lotes@cetus.test");
+
+        QuarkusTransaction.requiringNew().run(() -> DocumentBatchEntity.forgetSender(batch.accountId(), "user_test"));
+        assertThat(notifications.load(notice.id).orElseThrow().recipients()).isEmpty();
     }
 
     @Test
@@ -200,6 +208,21 @@ class BatchExpansionTest {
         assertThat(documents).hasSize(100);
         documents.forEach(doc -> recorder.gaveUp(doc.id, "Prueba"));
         assertThat(find(half.id()).status).isEqualTo(DocumentBatchEntity.Status.PARTIAL);
+    }
+
+    @Test
+    void aPageOfBatchesIsCountedBatchByBatch() {
+        Batch three = batch(Environment.TEST, 3);
+        Batch two = batch(Environment.TEST, 2);
+        handler.handle(job(three.id()));
+        expansion.start(two.id());
+        recorder.gaveUp(documents(three.id()).getFirst().id, "Prueba");
+
+        var counts = QuarkusTransaction.requiringNew()
+                .call(() -> DocumentBatchEntity.countsOf(List.of(find(three.id()), find(two.id()))));
+
+        assertThat(counts.get(three.id())).isEqualTo(new DocumentBatchEntity.Counts(0, 0, 1, 2, 0));
+        assertThat(counts.get(two.id())).isEqualTo(new DocumentBatchEntity.Counts(0, 0, 0, 0, 2));
     }
 
     @Test
