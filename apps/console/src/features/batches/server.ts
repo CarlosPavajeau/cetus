@@ -189,7 +189,6 @@ export const getBatch = createServerFn({ method: "GET" })
     }
   });
 
-/** The batch's documents by position. */
 export const listBatchDocuments = createServerFn({ method: "GET" })
   .validator(type({ id: "string.uuid", "after?": "number.integer >= 0 | undefined" }))
   .handler(({ data }): Promise<BatchDocumentPage> =>

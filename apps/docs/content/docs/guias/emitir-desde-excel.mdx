@@ -42,7 +42,8 @@ navegador: nada se envía hasta que confirmas. Antes verás:
 
 - Cuántas facturas están listas, el total con impuestos y a cuántos clientes les llegará el correo.
 - Una tabla con cada error, su **fila** y su **columna**. Corrige el archivo y súbelo de nuevo, o marca
-  **Excluir las facturas con errores** para emitir solo las demás.
+  **Excluir las N facturas con errores y emitir las otras M** (con los números de tu archivo) para emitir
+  solo las demás.
 - Un aviso si ya enviaste el mismo archivo con ese emisor en las últimas 24 horas.
 
 Al confirmar, Cetus vuelve a validar todo: el emisor, los catálogos, el rango de numeración y tus créditos
@@ -61,7 +62,7 @@ con su número y estado. Las facturas se numeran en el orden del archivo, en blo
 una por una mientras tanto siguen saliendo. Cuando termina, te llega un correo a ti, que lo enviaste.
 
 **Descargar el resultado** baja un CSV (que Excel abre directamente) con la referencia, la posición, el
-número, el CUFE, el estado, el motivo de cada rechazo y si la factura se creó.
+número, el CUFE (el código único que la DIAN le da a cada factura), el estado, el motivo de cada rechazo y si la factura se creó.
 
 | Estado del lote  | Qué significa                                                                     |
 | ---------------- | --------------------------------------------------------------------------------- |
