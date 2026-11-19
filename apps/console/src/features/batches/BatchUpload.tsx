@@ -37,7 +37,7 @@ import { formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { issuerName, issuerNit } from "~/features/issuers/labels";
-import type { BatchItem, Environment, Issuer } from "~/lib/api/types";
+import type { BatchItem, BatchLine, Environment, Issuer } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { templatePath } from "./columns";
@@ -382,12 +382,16 @@ function issuerLabel(issuer: Issuer) {
   return `${issuerName(issuer)} · NIT ${issuerNit(issuer)}`;
 }
 
-/** What the batch issues; lines priced by the catalog count only once the API resolves them. */
+/**
+ * What the batch issues, as far as the file tells: the API completes a line from its saved product and a customer
+ * from its saved one, so those count only once it resolves them.
+ */
 function Summary({ invoices, rowCount }: { invoices: ParsedInvoice[]; rowCount: number }) {
   const items = invoices.flatMap((invoice) => (invoice.item ? [invoice.item] : []));
   const total = items.reduce((sum, item) => sum + itemTotal(item), 0);
-  const fromCatalog = items.some((item) => item.lines.some((line) => line.unitPrice === undefined));
+  const fromCatalog = items.some((item) => item.lines.some(completedByCatalog));
   const emails = items.filter((item) => item.customer.email).length;
+  const emailsUnknown = items.length > emails;
   return (
     <dl className="grid gap-4 rounded-md border p-4 text-sm sm:grid-cols-4">
       <div>
@@ -409,15 +413,28 @@ function Summary({ invoices, rowCount }: { invoices: ParsedInvoice[]; rowCount: 
       </div>
       <div>
         <dt className="text-muted-foreground">Correos al cliente</dt>
-        <dd className="text-lg tabular-nums">{emails}</dd>
+        <dd className="text-lg tabular-nums">
+          {emails}
+          {emailsUnknown && (
+            <span className="block text-xs text-muted-foreground">
+              sin los de clientes guardados
+            </span>
+          )}
+        </dd>
       </div>
     </dl>
   );
 }
 
+function completedByCatalog(line: BatchLine) {
+  return (
+    line.unitPrice === undefined || (line.productCode !== undefined && line.taxes === undefined)
+  );
+}
+
 function itemTotal(item: BatchItem) {
   return item.lines.reduce((sum, line) => {
-    if (line.unitPrice === undefined) {
+    if (line.unitPrice === undefined || completedByCatalog(line)) {
       return sum;
     }
     const base = line.quantity * line.unitPrice;

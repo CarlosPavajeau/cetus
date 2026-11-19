@@ -236,6 +236,25 @@ describe("parseTable", () => {
     ]);
   });
 
+  it("refuses what the API would, before the invoice counts as ready", () => {
+    const parsed = invoices(
+      parseTable([
+        headers,
+        row({ ...customer, ...line, Referencia: "R".repeat(41) }),
+        row({ ...customer, ...line, Referencia: "B", "Precio unitario": -100 }),
+        row({ ...customer, ...line, Referencia: "C", Email: `${"a".repeat(250)}@x.co` }),
+      ]),
+    );
+
+    expect(
+      parsed.map((invoice) => [invoice.item, invoice.errors.map((error) => error.column)]),
+    ).toEqual([
+      [null, ["Referencia"]],
+      [null, ["Precio unitario"]],
+      [null, ["Email"]],
+    ]);
+  });
+
   it("shows text as it came, without interpreting it", () => {
     const parsed = invoices(
       parseTable([
@@ -287,6 +306,13 @@ describe("parseCsv", () => {
         },
       ]);
     }
+  });
+
+  it("numbers rows as the file does, blank lines included", () => {
+    const [header, invoice] = csv(",").split("\r\n");
+    const parsed = invoices(parseCsv([header, "", invoice?.replace("Arriendo", "")].join("\r\n")));
+    expect(parsed[0]?.rows).toEqual([3]);
+    expect(parsed[0]?.errors).toEqual([expect.objectContaining({ row: 3, column: "Descripción" })]);
   });
 });
 

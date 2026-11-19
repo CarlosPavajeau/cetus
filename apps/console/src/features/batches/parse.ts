@@ -26,6 +26,7 @@ import {
 export const referencesMax = 1000;
 export const rowsMax = 5000;
 export const linesMax = 500;
+const referenceLengthMax = 40;
 
 export type Cell = string | number | boolean | Date | null;
 
@@ -77,12 +78,11 @@ export function parseWorkbook(sheets: SheetData[]): ParsedFile {
 
 /** A CSV with the template's headers, separated by commas or semicolons, in UTF-8 with or without BOM. */
 export function parseCsv(content: string): ParsedFile {
+  // Blank lines stay so rows keep the spreadsheet's numbers; parseTable skips them. The file size bounds the work.
   const result = Papa.parse<string[]>(content.replace(/^﻿/, ""), {
     delimitersToGuess: [",", ";"],
-    skipEmptyLines: "greedy",
-    preview: rowsMax + 2,
   });
-  if (result.data.length === 0) {
+  if (result.data.every((cells) => cells.every((cell) => cell.trim() === ""))) {
     return { ok: false, message: "El archivo está vacío." };
   }
   return parseTable(result.data);
@@ -177,6 +177,9 @@ function readInvoice(
       }
     }
   }
+  if (reference.length > referenceLengthMax) {
+    fail(first.number, "reference", `Escribe hasta ${referenceLengthMax} caracteres.`);
+  }
   if (group.length > linesMax) {
     fail(first.number, null, `La factura tiene más de ${linesMax} líneas.`);
   }
@@ -205,7 +208,7 @@ function readInvoice(
   const addressLine = field("addressLine", optional(plain(300)));
   const email = field(
     "email",
-    optional(pattern(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Escribe un correo válido.")),
+    optional(pattern(/^(?=.{1,254}$)[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Escribe un correo válido.")),
   );
   const phone = field(
     "phone",
@@ -451,10 +454,15 @@ function municipalityOf(cell: Cell): Parsed<MunicipalityAddress> {
     : ok(found);
 }
 
-/** A number with a comma or a dot for decimals and no thousands separators, up to six decimals. */
+/** A number of zero or more, with a comma or a dot for decimals and no thousands separators, up to six decimals. */
 function decimal(cell: Cell): Parsed<number> {
   if (typeof cell === "number") {
-    return Number.isFinite(cell) ? ok(Number(cell.toFixed(6))) : failure("Escribe un número.");
+    if (!Number.isFinite(cell)) {
+      return failure("Escribe un número.");
+    }
+    return cell < 0
+      ? failure("Escribe un número mayor o igual a cero.")
+      : ok(Number(cell.toFixed(6)));
   }
   const value = text(cell);
   if (!/^\d{1,14}([.,]\d{1,6})?$/.test(value)) {
