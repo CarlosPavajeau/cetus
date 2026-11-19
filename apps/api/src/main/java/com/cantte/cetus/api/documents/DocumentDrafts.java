@@ -139,7 +139,7 @@ public class DocumentDrafts {
             CalculationResult calculation) {
         ZonedDateTime now = ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
         if (environment == Environment.SANDBOX) {
-            requireSandboxQuota(accountId, now);
+            requireSandboxQuota(accountId, now, 1);
         }
         return DocumentEntity.draft(accountId, issuer, environment, type, calculation, now);
     }
@@ -187,11 +187,17 @@ public class DocumentDrafts {
         submit(note);
     }
 
+    /** Refuses {@code count} more SANDBOX documents today if they do not fit in the account's daily quota. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void requireSandboxQuota(UUID accountId, long count) {
+        requireSandboxQuota(accountId, ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS), count);
+    }
+
     /**
      * The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there.
      * A lock per account until the transaction ends keeps two requests from both counting one slot left.
      */
-    private void requireSandboxQuota(UUID accountId, ZonedDateTime now) {
+    private void requireSandboxQuota(UUID accountId, ZonedDateTime now, long count) {
         DocumentEntity.getEntityManager()
                 .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
                 .setParameter("key", "sandbox-quota:" + accountId)
@@ -202,7 +208,7 @@ public class DocumentDrafts {
                 accountId,
                 Environment.SANDBOX,
                 midnight.toOffsetDateTime());
-        if (issuedToday >= sandboxDailyDocuments) {
+        if (issuedToday + count > sandboxDailyDocuments) {
             throw new SandboxDailyLimit(sandboxDailyDocuments, Duration.between(now, midnight.plusDays(1)));
         }
     }
