@@ -16,8 +16,9 @@ cada **línea** de factura:
   (por ejemplo, `ARR-2026-11-001`), debe ser única en el archivo y vuelve en el resultado.
 - Los datos del cliente, el pago y las notas van en la **primera fila** de cada referencia. En las demás
   filas déjalos vacíos; si repites un valor distinto, la fila sale con error.
-- Las columnas con lista (tipo de identificación, responsabilidad fiscal, medio de pago, municipio, IVA…)
-  traen un desplegable: elige el valor de la lista.
+- Las columnas con lista (tipo de identificación, responsabilidad fiscal, medio de pago, municipio, IVA,
+  impuesto al consumo…) traen un desplegable: elige el valor de la lista. Una línea puede llevar IVA e
+  impuesto al consumo a la vez.
 
 La hoja **Instrucciones** describe cada columna y trae un ejemplo de una factura de dos líneas.
 
@@ -25,12 +26,13 @@ La hoja **Instrucciones** describe cada columna y trae un ejemplo de una factura
 
 Si el cliente ya está en **Clientes** del mismo ambiente, basta con su tipo y número de identificación: los
 demás datos se toman de allí, y lo que escribas en el archivo los reemplaza solo en esa factura. Igual con
-los productos: con el **Código de producto** de uno guardado, la descripción, la unidad, el precio y el IVA
-vacíos salen del catálogo. El archivo no agrega clientes ni productos al catálogo.
+los productos: con el **Código de producto** de uno guardado, la descripción, la unidad, el precio y los
+impuestos vacíos salen del catálogo. El archivo no agrega clientes ni productos al catálogo.
 
 ### Desde otro sistema: CSV
 
-También puedes subir un `.csv` con **las mismas columnas y los mismos encabezados**, en UTF-8 (con o sin
+La consola solo acepta como Excel la plantilla de Cetus. Si tus facturas salen de otro sistema o de otra hoja
+de cálculo, sube un `.csv` con **las mismas columnas y los mismos encabezados**, en UTF-8 (con o sin
 BOM), separado por comas o por punto y coma. En un CSV las listas aceptan la etiqueta o el código (`NIT`,
 `CASH`, `10`…), los números usan coma o punto decimal sin separadores de miles, y las fechas van como
 `AAAA-MM-DD` o `DD/MM/AAAA`.
