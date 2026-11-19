@@ -326,3 +326,29 @@ export type ObligationCap = Schemas["ObligationCapView"];
 export type ObligationAnswer = Schemas["Answer"];
 
 export type LeadIntegration = Schemas["Integration"];
+
+export type BatchRequest = Schemas["BatchRequest"];
+
+export type BatchItem = Schemas["BatchItem"];
+
+export type BatchCustomer = Schemas["BatchCustomer"];
+
+export type BatchLine = Schemas["BatchLine"];
+
+export type BatchError = Schemas["BatchError"];
+
+export type BatchProblem = Schemas["BatchProblem"];
+
+export type BatchCreated = Schemas["BatchCreated"];
+
+export type BatchView = Schemas["BatchView"];
+
+export type BatchStatus = Schemas["BatchStatus"];
+
+export type BatchPage = Schemas["BatchPage"];
+
+export type BatchDocument = Schemas["BatchDocument"];
+
+export type BatchDocumentPage = Schemas["BatchDocumentPage"];
+
+export type SameFileResult = Schemas["SameFileResult"];

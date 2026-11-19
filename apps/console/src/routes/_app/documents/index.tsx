@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { FileSpreadsheetIcon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -196,10 +196,19 @@ function Documents() {
         title="Documentos"
         lead="Facturas y notas de la cuenta, con su estado ante la DIAN y su entrega al cliente."
         action={
-          <Link to="/documents/new" className={cn(buttonVariants())}>
-            <PlusIcon data-icon="inline-start" />
-            Emitir factura
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/documents/batches/new"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              <FileSpreadsheetIcon data-icon="inline-start" />
+              Emitir desde Excel
+            </Link>
+            <Link to="/documents/new" className={cn(buttonVariants())}>
+              <PlusIcon data-icon="inline-start" />
+              Emitir factura
+            </Link>
+          </div>
         }
       />
 
