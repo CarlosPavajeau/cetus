@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { batchQuery } from "~/features/batches/queries";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import { IssueDateFilter } from "~/features/documents/IssueDateFilter";
 import {
@@ -75,10 +76,16 @@ export const Route = createFileRoute("/_app/documents/")({
   loaderDeps: ({ search }) => search,
   loader: async ({ context: { queryClient }, deps }) => {
     const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
-    await queryClient.infiniteQuery({
-      ...documentsQuery(withEnvironment(deps, environment)),
-      staleTime: "static",
-    });
+    const [batch] = await Promise.all([
+      deps.batchId
+        ? queryClient.query({ ...batchQuery(deps.batchId), staleTime: "static" })
+        : undefined,
+      queryClient.infiniteQuery({
+        ...documentsQuery(withEnvironment(deps, environment)),
+        staleTime: "static",
+      }),
+    ]);
+    return batch ? { environment: batch.environment } : {};
   },
   component: Documents,
 });
@@ -177,11 +184,12 @@ function SearchBox({
 
 function Documents() {
   const filters = Route.useSearch();
-  const environment = useActiveEnvironment();
+  const active = useActiveEnvironment();
+  const environment = Route.useLoaderData().environment ?? active;
   const navigate = useNavigate({ from: Route.fullPath });
   // Each filter set is its own query, so the pages appended with "Ver más" never mix across filters.
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    documentsQuery(withEnvironment(filters, environment)),
+    documentsQuery(withEnvironment(filters, active)),
   );
   const documents = data.pages.flatMap((page) => page.items);
   const filtered = Object.values(filters).some((value) => value !== undefined);

@@ -70,7 +70,8 @@ function BatchDetail({ batch }: { batch: BatchView }) {
     batchDocumentsQuery(batch.id),
   );
   const queryClient = useQueryClient();
-  const progress = `${batch.status}:${countFinished(batch.counts)}:${batch.counts.notCreated}`;
+  const { accepted, rejected, failed, notCreated } = batch.counts;
+  const progress = `${batch.status}:${accepted}:${rejected}:${failed}:${notCreated}`;
   const progressSeen = useRef(progress);
   useEffect(() => {
     if (progressSeen.current === progress) {
