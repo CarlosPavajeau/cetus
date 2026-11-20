@@ -5,9 +5,11 @@ vulnerabilities:
     paths:
       - apps/api/gradle.lockfile
       - apps/worker/gradle.lockfile
+      - lint/architecture/gradle.lockfile
     statement: >-
       Guava 33.6.0-jre comes with Quarkus. The DoS needs Guava to deserialize attacker-controlled data, which
-      neither service does. Fixed in 33.7.2: move to it with the next Quarkus upgrade.
+      neither service does; lint/architecture only resolves the API's classpath to check it and ships nothing.
+      Fixed in 33.7.2: move to it with the next Quarkus upgrade.
     expired_at: 2026-12-17
   - id: CVE-2026-116576
     paths:
