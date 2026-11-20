@@ -4,6 +4,13 @@ public final class JobTypes {
 
     /** Build, sign and send a document to the DIAN. reference_id = document id. */
     public static final String PROCESS_DOCUMENT = "PROCESS_DOCUMENT";
+    /**
+     * Like {@link #PROCESS_DOCUMENT}, for a document of a batch: its own concurrency limit keeps a batch from taking
+     * every send to the DIAN. reference_id = document id.
+     */
+    public static final String PROCESS_BATCH_DOCUMENT = "PROCESS_BATCH_DOCUMENT";
+    /** Create the documents of a received batch, a block at a time. reference_id = document batch id. */
+    public static final String EXPAND_BATCH = "EXPAND_BATCH";
     /** Poll GetStatusZip for an asynchronous test set upload. reference_id = document id. */
     public static final String CHECK_TEST_SET_STATUS = "CHECK_TEST_SET_STATUS";
     /** Build the AttachedDocument and the PDF, and email them to the customer. reference_id = document id. */

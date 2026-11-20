@@ -127,6 +127,7 @@ public class DocumentResource {
             @QueryParam("type") DocumentType type,
             @QueryParam("status") DocumentStatus status,
             @QueryParam("issuerId") UUID issuerId,
+            @QueryParam("batchId") UUID batchId,
             @QueryParam("from") LocalDate from,
             @QueryParam("to") LocalDate to,
             @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
@@ -134,7 +135,8 @@ public class DocumentResource {
             @QueryParam("limit") @DefaultValue("50") int limit) {
         UUID accountId = context.accountId();
         int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
-        DocumentEntity.Search search = new DocumentEntity.Search(environment, type, status, issuerId, from, to, q);
+        DocumentEntity.Search search =
+                new DocumentEntity.Search(environment, type, status, issuerId, from, to, q, batchId);
         // One more than asked tells whether there is a next page.
         List<DocumentEntity> rows = DocumentEntity.pageForAccount(accountId, search, before, size + 1);
         List<DocumentEntity> page = rows.subList(0, Math.min(size, rows.size()));

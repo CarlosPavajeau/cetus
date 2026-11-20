@@ -1,5 +1,7 @@
 package com.cantte.cetus.api.error;
 
+import com.cantte.cetus.api.batches.BatchIntake;
+import com.cantte.cetus.api.batches.BatchProblem;
 import com.cantte.cetus.api.billing.Orders;
 import com.cantte.cetus.api.console.ConsoleIssuance;
 import com.cantte.cetus.api.console.DocumentResends;
@@ -132,6 +134,16 @@ public class ErrorMappers {
     }
 
     @ServerExceptionMapper
+    public Response invalidBatch(BatchProblem.Invalid e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response tooManyOpenBatches(BatchIntake.TooManyOpen e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
     public Response creditRefused(CreditRefused e) {
         return ProblemDetail.response(402, e.reason.code, e.getMessage());
     }
@@ -211,7 +223,7 @@ public class ErrorMappers {
      * {@code lines[0].quantity}. The method and parameter nodes are ours, not the client's; a query or path
      * parameter keeps its own name.
      */
-    static String field(Path path) {
+    public static String field(Path path) {
         List<Path.Node> nodes = new ArrayList<>();
         path.forEach(nodes::add);
         int skip = 0;

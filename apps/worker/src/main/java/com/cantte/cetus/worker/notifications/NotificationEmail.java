@@ -23,6 +23,11 @@ public record NotificationEmail(String subject, String html, String text) {
             NotificationKind kind, String accountName, Map<String, String> data, String consoleUrl, String link) {
         Body body = body(kind, accountName, data, link);
         String url = consoleUrl + body.path();
+        String reason = kind == NotificationKind.BATCH_FINISHED
+                ? "Recibes este correo porque enviaste este lote de facturas de %s en Cetus.".formatted(accountName)
+                : ("Recibes este correo porque eres un contacto de %s en Cetus. Puedes cambiar los contactos en"
+                                + " Configuración > Contactos.")
+                        .formatted(accountName);
         String text = """
                 %s
 
@@ -30,17 +35,15 @@ public record NotificationEmail(String subject, String html, String text) {
 
                 %s: %s
 
-                Recibes este correo porque eres un contacto de %s en Cetus. Puedes cambiar los contactos en \
-                Configuración > Contactos.
-                """.formatted(body.what(), body.todo(), body.action(), url, accountName);
+                %s
+                """.formatted(body.what(), body.todo(), body.action(), url, reason);
         String html = """
                 <p>%s</p>
                 <p>%s</p>
                 <p><a href="%s">%s</a></p>
-                <p style="color:#5f6368;font-size:12px">Recibes este correo porque eres un contacto de %s en Cetus. \
-                Puedes cambiar los contactos en Configuración &gt; Contactos.</p>
+                <p style="color:#5f6368;font-size:12px">%s</p>
                 """.formatted(
-                escape(body.what()), escape(body.todo()), escape(url), escape(body.action()), escape(accountName));
+                        escape(body.what()), escape(body.todo()), escape(url), escape(body.action()), escape(reason));
         return new NotificationEmail("[Cetus] " + body.subject(), html, text);
     }
 
@@ -346,7 +349,40 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + " emitiendo con lo que tengas disponible.",
                         "Pagar el saldo",
                         "/billing/orders/" + data.get("orderId"));
+            case BATCH_FINISHED -> batchFinished(data);
         };
+    }
+
+    /** What the batch issued; the documents not created are those its expansion never reached. */
+    private static Body batchFinished(Map<String, String> data) {
+        long accepted = Long.parseLong(data.get("accepted"));
+        long rejected = Long.parseLong(data.get("rejected"));
+        long failed = Long.parseLong(data.get("failed"));
+        long notCreated = Long.parseLong(data.get("notCreated"));
+        String file = data.get("fileName") == null ? "" : " (" + data.get("fileName") + ")";
+        String what = "Terminó el lote de %s facturas%s en %s: %s aceptadas por la DIAN, %s rechazadas y %s fallidas."
+                .formatted(
+                        Numbers.count(Long.parseLong(data.get("items"))),
+                        file,
+                        environment(data.get("environment")),
+                        Numbers.count(accepted),
+                        Numbers.count(rejected),
+                        Numbers.count(failed));
+        String todo = notCreated > 0
+                ? "%s facturas no se crearon porque el lote se detuvo. Descarga el resultado para ver cuáles y vuelve a"
+                                .formatted(Numbers.count(notCreated))
+                        + " enviarlas cuando resuelvas la causa."
+                : rejected + failed > 0
+                        ? "Descarga el resultado para ver el motivo de cada factura rechazada o fallida."
+                        : "Descarga el resultado para ver el número y el CUFE de cada factura.";
+        return new Body(
+                notCreated > 0 || rejected + failed > 0
+                        ? "Terminó tu lote de facturas, con novedades"
+                        : "Terminó tu lote de facturas",
+                what,
+                todo,
+                "Ver el lote",
+                "/documents/batches/" + data.get("batchId"));
     }
 
     private static String orderReturnedBecause(String status) {

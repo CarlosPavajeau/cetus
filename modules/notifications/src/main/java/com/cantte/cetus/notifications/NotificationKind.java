@@ -46,7 +46,9 @@ public enum NotificationKind {
     /** A payment the order could not take (it was paid already, refunded or canceled) went back; the order stays. */
     PAYMENT_RETURNED(Set.of(Category.BILLING)),
     /** The account owes what it consumed and did not pay; new purchases wait until it is paid. */
-    ACCOUNT_DEBT(Set.of(Category.BILLING));
+    ACCOUNT_DEBT(Set.of(Category.BILLING)),
+    /** A batch of invoices finished; it goes to the person who sent it ({@code email} in its data), not to a category. */
+    BATCH_FINISHED(Set.of());
 
     private final Set<Category> categories;
 

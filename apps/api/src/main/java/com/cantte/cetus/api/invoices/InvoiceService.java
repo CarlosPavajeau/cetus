@@ -142,7 +142,7 @@ public class InvoiceService {
         };
     }
 
-    private static PaymentInfo toPayment(InvoiceRequest.Payment payment) {
+    public static PaymentInfo toPayment(InvoiceRequest.Payment payment) {
         if (payment.method() == InvoiceRequest.PaymentMethod.CREDIT && payment.dueDate() == null) {
             throw new DomainException("payment_due_date_required", "Credit payments require a due date");
         }

@@ -70,6 +70,9 @@ import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/dev
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
 import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
+import { Route as AppDocumentsBatchesIndexRouteImport } from './routes/_app/documents/batches/index'
+import { Route as AppDocumentsBatchesBatchIdRouteImport } from './routes/_app/documents/batches/$batchId'
+import { Route as AppDocumentsBatchesNewRouteImport } from './routes/_app/documents/batches/new'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
 import { Route as AppDocumentsDocumentIdNotesNewRouteImport } from './routes/_app/documents/$documentId_.notes.new'
 import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
@@ -385,6 +388,23 @@ const AppDevelopersWebhooksEndpointIdRoute =
     path: '/developers/webhooks/$endpointId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDocumentsBatchesIndexRoute =
+  AppDocumentsBatchesIndexRouteImport.update({
+    id: '/documents/batches/',
+    path: '/documents/batches/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppDocumentsBatchesBatchIdRoute =
+  AppDocumentsBatchesBatchIdRouteImport.update({
+    id: '/documents/batches/$batchId',
+    path: '/documents/batches/$batchId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppDocumentsBatchesNewRoute = AppDocumentsBatchesNewRouteImport.update({
+  id: '/documents/batches/new',
+  path: '/documents/batches/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   id: '/issuers/$issuerId_/edit',
   path: '/issuers/$issuerId/edit',
@@ -456,6 +476,8 @@ export interface FileRoutesByFullPath {
   '/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
+  '/documents/batches/$batchId': typeof AppDocumentsBatchesBatchIdRoute
+  '/documents/batches/new': typeof AppDocumentsBatchesNewRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/admin/support/': typeof AdminAdminSupportIndexRoute
@@ -463,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/billing/orders/': typeof AppBillingOrdersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/batches/': typeof AppDocumentsBatchesIndexRoute
   '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
@@ -519,6 +542,8 @@ export interface FileRoutesByTo {
   '/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
+  '/documents/batches/$batchId': typeof AppDocumentsBatchesBatchIdRoute
+  '/documents/batches/new': typeof AppDocumentsBatchesNewRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
   '/admin/support': typeof AdminAdminSupportIndexRoute
@@ -526,6 +551,7 @@ export interface FileRoutesByTo {
   '/billing/orders': typeof AppBillingOrdersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/batches': typeof AppDocumentsBatchesIndexRoute
   '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
@@ -586,6 +612,8 @@ export interface FileRoutesById {
   '/_app/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
+  '/_app/documents/batches/$batchId': typeof AppDocumentsBatchesBatchIdRoute
+  '/_app/documents/batches/new': typeof AppDocumentsBatchesNewRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/_admin/admin/support/': typeof AdminAdminSupportIndexRoute
@@ -593,6 +621,7 @@ export interface FileRoutesById {
   '/_app/billing/orders/': typeof AppBillingOrdersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/_app/documents/batches/': typeof AppDocumentsBatchesIndexRoute
   '/_app/documents/$documentId_/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/_admin/admin/organizations/$accountId_/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
@@ -651,6 +680,8 @@ export interface FileRouteTypes {
     | '/billing/orders/$orderId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
+    | '/documents/batches/$batchId'
+    | '/documents/batches/new'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations/'
     | '/admin/support/'
@@ -658,6 +689,7 @@ export interface FileRouteTypes {
     | '/billing/orders/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
+    | '/documents/batches/'
     | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   fileRoutesByTo: FileRoutesByTo
@@ -714,6 +746,8 @@ export interface FileRouteTypes {
     | '/billing/orders/$orderId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
+    | '/documents/batches/$batchId'
+    | '/documents/batches/new'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations'
     | '/admin/support'
@@ -721,6 +755,7 @@ export interface FileRouteTypes {
     | '/billing/orders'
     | '/developers/api-keys'
     | '/developers/webhooks'
+    | '/documents/batches'
     | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
@@ -780,6 +815,8 @@ export interface FileRouteTypes {
     | '/_app/billing/orders/$orderId'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/webhooks/$endpointId'
+    | '/_app/documents/batches/$batchId'
+    | '/_app/documents/batches/new'
     | '/_app/issuers/$issuerId_/edit'
     | '/_admin/admin/organizations/'
     | '/_admin/admin/support/'
@@ -787,6 +824,7 @@ export interface FileRouteTypes {
     | '/_app/billing/orders/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
+    | '/_app/documents/batches/'
     | '/_app/documents/$documentId_/notes/new'
     | '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
   fileRoutesById: FileRoutesById
@@ -1245,6 +1283,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDevelopersWebhooksEndpointIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/batches/': {
+      id: '/_app/documents/batches/'
+      path: '/documents/batches'
+      fullPath: '/documents/batches/'
+      preLoaderRoute: typeof AppDocumentsBatchesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/batches/$batchId': {
+      id: '/_app/documents/batches/$batchId'
+      path: '/documents/batches/$batchId'
+      fullPath: '/documents/batches/$batchId'
+      preLoaderRoute: typeof AppDocumentsBatchesBatchIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/batches/new': {
+      id: '/_app/documents/batches/new'
+      path: '/documents/batches/new'
+      fullPath: '/documents/batches/new'
+      preLoaderRoute: typeof AppDocumentsBatchesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/$issuerId_/edit': {
       id: '/_app/issuers/$issuerId_/edit'
       path: '/issuers/$issuerId/edit'
@@ -1324,10 +1383,13 @@ interface AppRouteChildren {
   AppBillingOrdersOrderIdRoute: typeof AppBillingOrdersOrderIdRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
   AppDevelopersWebhooksEndpointIdRoute: typeof AppDevelopersWebhooksEndpointIdRoute
+  AppDocumentsBatchesBatchIdRoute: typeof AppDocumentsBatchesBatchIdRoute
+  AppDocumentsBatchesNewRoute: typeof AppDocumentsBatchesNewRoute
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
   AppBillingOrdersIndexRoute: typeof AppBillingOrdersIndexRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
   AppDevelopersWebhooksIndexRoute: typeof AppDevelopersWebhooksIndexRoute
+  AppDocumentsBatchesIndexRoute: typeof AppDocumentsBatchesIndexRoute
   AppDocumentsDocumentIdNotesNewRoute: typeof AppDocumentsDocumentIdNotesNewRoute
 }
 
@@ -1353,10 +1415,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppBillingOrdersOrderIdRoute: AppBillingOrdersOrderIdRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
   AppDevelopersWebhooksEndpointIdRoute: AppDevelopersWebhooksEndpointIdRoute,
+  AppDocumentsBatchesBatchIdRoute: AppDocumentsBatchesBatchIdRoute,
+  AppDocumentsBatchesNewRoute: AppDocumentsBatchesNewRoute,
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
   AppBillingOrdersIndexRoute: AppBillingOrdersIndexRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
   AppDevelopersWebhooksIndexRoute: AppDevelopersWebhooksIndexRoute,
+  AppDocumentsBatchesIndexRoute: AppDocumentsBatchesIndexRoute,
   AppDocumentsDocumentIdNotesNewRoute: AppDocumentsDocumentIdNotesNewRoute,
 }
 

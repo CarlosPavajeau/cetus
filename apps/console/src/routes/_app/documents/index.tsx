@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { FileSpreadsheetIcon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { batchQuery } from "~/features/batches/queries";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import { IssueDateFilter } from "~/features/documents/IssueDateFilter";
 import {
@@ -75,17 +76,23 @@ export const Route = createFileRoute("/_app/documents/")({
   loaderDeps: ({ search }) => search,
   loader: async ({ context: { queryClient }, deps }) => {
     const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
-    await queryClient.infiniteQuery({
-      ...documentsQuery(withEnvironment(deps, environment)),
-      staleTime: "static",
-    });
+    const [batch] = await Promise.all([
+      deps.batchId
+        ? queryClient.query({ ...batchQuery(deps.batchId), staleTime: "static" })
+        : undefined,
+      queryClient.infiniteQuery({
+        ...documentsQuery(withEnvironment(deps, environment)),
+        staleTime: "static",
+      }),
+    ]);
+    return batch ? { environment: batch.environment } : {};
   },
   component: Documents,
 });
 
-/** An issuer has a single environment, so its documents are listed whatever the selector says. */
+/** An issuer or a batch has a single environment, so its documents are listed whatever the selector says. */
 function withEnvironment(filters: SearchFilters, environment: Environment): DocumentFilters {
-  return filters.issuerId ? filters : { ...filters, environment };
+  return filters.issuerId || filters.batchId ? filters : { ...filters, environment };
 }
 
 type Option = { label: string; value: string };
@@ -177,11 +184,12 @@ function SearchBox({
 
 function Documents() {
   const filters = Route.useSearch();
-  const environment = useActiveEnvironment();
+  const active = useActiveEnvironment();
+  const environment = Route.useLoaderData().environment ?? active;
   const navigate = useNavigate({ from: Route.fullPath });
   // Each filter set is its own query, so the pages appended with "Ver más" never mix across filters.
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    documentsQuery(withEnvironment(filters, environment)),
+    documentsQuery(withEnvironment(filters, active)),
   );
   const documents = data.pages.flatMap((page) => page.items);
   const filtered = Object.values(filters).some((value) => value !== undefined);
@@ -196,19 +204,27 @@ function Documents() {
         title="Documentos"
         lead="Facturas y notas de la cuenta, con su estado ante la DIAN y su entrega al cliente."
         action={
-          <Link to="/documents/new" className={cn(buttonVariants())}>
-            <PlusIcon data-icon="inline-start" />
-            Emitir factura
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/documents/batches" className={cn(buttonVariants({ variant: "outline" }))}>
+              <FileSpreadsheetIcon data-icon="inline-start" />
+              Lotes desde Excel
+            </Link>
+            <Link to="/documents/new" className={cn(buttonVariants())}>
+              <PlusIcon data-icon="inline-start" />
+              Emitir factura
+            </Link>
+          </div>
         }
       />
 
       <section className="flex flex-col gap-4" aria-label="Tus documentos">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <p className="text-xs text-muted-foreground">
-            {filters.issuerId
-              ? "Documentos de un emisor"
-              : `Documentos en ${environmentLabel[environment].toLowerCase()}`}
+            {filters.batchId
+              ? "Documentos de un lote"
+              : filters.issuerId
+                ? "Documentos de un emisor"
+                : `Documentos en ${environmentLabel[environment].toLowerCase()}`}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <FilterSelect
@@ -230,6 +246,19 @@ function Documents() {
             <SearchBox key={filters.q ?? ""} applied={filters.q} onSearch={(q) => update({ q })} />
           </div>
         </div>
+
+        {filters.batchId && (
+          <p className="text-2xs text-muted-foreground">
+            Solo los documentos de un lote.{" "}
+            <button
+              type="button"
+              className="underline underline-offset-4 hover:text-foreground"
+              onClick={() => update({ batchId: undefined })}
+            >
+              Ver todos
+            </button>
+          </p>
+        )}
 
         {filters.issuerId && (
           <p className="text-2xs text-muted-foreground">

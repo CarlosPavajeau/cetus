@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useMatch, useNavigate, useRouter } from "@tanstack/react-router";
 
 import {
   Select,
@@ -27,11 +27,12 @@ const items = (["SANDBOX", "TEST", "LIVE"] as const).map((value) => ({
 
 /**
  * The environment the console works in: the documents it lists and where new ones are issued. Leaving the
- * environment of the document on screen goes back to the list, so the page never mixes the two.
+ * environment of the document or batch on screen goes back to its list, so the page never mixes the two.
  */
 export function EnvironmentSelect() {
   const environment = useActiveEnvironment();
   const page = usePageEnvironment();
+  const onBatch = useMatch({ from: "/_app/documents/batches/$batchId", shouldThrow: false });
   const queryClient = useQueryClient();
   const router = useRouter();
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export function EnvironmentSelect() {
     onSuccess: async (next) => {
       queryClient.setQueryData(activeEnvironmentQuery.queryKey, next);
       if (page !== null && page !== next) {
-        await navigate({ to: "/documents" });
+        await navigate({ to: onBatch ? "/documents/batches" : "/documents" });
         return;
       }
       await router.invalidate();

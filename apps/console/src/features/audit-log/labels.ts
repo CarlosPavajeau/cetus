@@ -17,6 +17,7 @@ export const actionLabel: Record<AuditAction, string> = {
   WEBHOOK_ENDPOINT_ENABLED: "Webhook reactivado",
   WEBHOOK_DELIVERY_RETRIED: "Webhook reenviado",
   INVOICE_ISSUED: "Factura emitida",
+  DOCUMENT_BATCH_RECEIVED: "Lote de facturas recibido",
   CREDIT_NOTE_ISSUED: "Nota crédito emitida",
   DEBIT_NOTE_ISSUED: "Nota débito emitida",
   DOCUMENT_RESENT: "Documento reenviado por correo",

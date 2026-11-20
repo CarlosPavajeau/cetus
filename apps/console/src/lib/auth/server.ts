@@ -242,6 +242,15 @@ export const auth = betterAuth({
       roles: organizationRoles,
       invitationExpiresIn: invitationSeconds,
       requireEmailVerificationOnInvitation: true,
+      organizationHooks: {
+        afterRemoveMember: async ({ member, organization: removedFrom }) => {
+          // Imported here: the module calls the API, whose client signs its requests with this one.
+          const { forgetBatchSender } = await import("~/features/members/batchSenders");
+          await forgetBatchSender(removedFrom.id, member.userId).catch((error: unknown) =>
+            console.error("Could not stop the batch emails of a removed member", error),
+          );
+        },
+      },
     }),
     admin({
       ac,

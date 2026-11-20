@@ -53,6 +53,8 @@ reglas de cardinalidad de `AGENTS.md`.
 | DIAN con fallas | Más del 20 % de las llamadas a la DIAN (LIVE o TEST) fallan en 10 minutos, con al menos 5 llamadas | high |
 | Errores 5xx en el API | Más del 2 % de respuestas 5xx en 10 minutos, con al menos 20 peticiones | high |
 | Pool de conexiones saturado | Peticiones esperando una conexión durante 5 minutos | medium |
+| Lotes atascados | Un lote abierto lleva una hora sin cambios, ni él ni sus documentos | high |
+| Lotes incompletos | Un lote de producción terminó `PARTIAL` o `FAILED` en la última hora | medium |
 
 Cada alerta enlaza a su panel y dice qué revisar primero. Sin datos (por ejemplo, sin tráfico) quedan en OK.
 

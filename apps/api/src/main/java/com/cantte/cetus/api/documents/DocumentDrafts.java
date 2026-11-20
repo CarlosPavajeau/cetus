@@ -13,6 +13,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.AfterCommit;
+import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
@@ -139,7 +140,7 @@ public class DocumentDrafts {
             CalculationResult calculation) {
         ZonedDateTime now = ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
         if (environment == Environment.SANDBOX) {
-            requireSandboxQuota(accountId, now);
+            requireSandboxQuota(accountId, now, 1);
         }
         return DocumentEntity.draft(accountId, issuer, environment, type, calculation, now);
     }
@@ -187,22 +188,27 @@ public class DocumentDrafts {
         submit(note);
     }
 
+    /** Refuses {@code count} more SANDBOX documents today if they do not fit in the account's daily quota. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void requireSandboxQuota(UUID accountId, long count) {
+        requireSandboxQuota(accountId, ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS), count);
+    }
+
     /**
-     * The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there.
-     * A lock per account until the transaction ends keeps two requests from both counting one slot left.
+     * The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there, counting
+     * the items its open batches have yet to turn into documents. A lock per account until the transaction ends keeps
+     * two requests, or a request and a batch block, from both counting one slot left.
      */
-    private void requireSandboxQuota(UUID accountId, ZonedDateTime now) {
-        DocumentEntity.getEntityManager()
-                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
-                .setParameter("key", "sandbox-quota:" + accountId)
-                .getSingleResult();
+    private void requireSandboxQuota(UUID accountId, ZonedDateTime now, long count) {
+        DocumentEntity.lockSandboxQuota(accountId);
         ZonedDateTime midnight = now.toLocalDate().atStartOfDay(DianTime.ZONE);
         long issuedToday = DocumentEntity.count(
                 "accountId = ?1 and environment = ?2 and createdAt >= ?3",
                 accountId,
                 Environment.SANDBOX,
                 midnight.toOffsetDateTime());
-        if (issuedToday >= sandboxDailyDocuments) {
+        long pending = DocumentBatchEntity.pendingItems(accountId, Environment.SANDBOX, null);
+        if (issuedToday + pending + count > sandboxDailyDocuments) {
             throw new SandboxDailyLimit(sandboxDailyDocuments, Duration.between(now, midnight.plusDays(1)));
         }
     }

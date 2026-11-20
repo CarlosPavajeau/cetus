@@ -32,6 +32,7 @@ import com.cantte.cetus.persistence.usage.UsageCounters;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
+import com.cantte.cetus.worker.batches.BatchClosure;
 import com.cantte.cetus.worker.notifications.Numbers;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -94,6 +95,9 @@ public class ResultRecorder {
 
     @Inject
     AuditLog auditLog;
+
+    @Inject
+    BatchClosure batches;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void artifact(UUID documentId, DocumentArtifactEntity.Kind kind, DocumentStorage.StoredObject stored) {
@@ -218,6 +222,7 @@ public class ResultRecorder {
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
                 doc);
+        finishedInBatch(doc);
         DocumentType type = doc.documentType;
         Environment environment = doc.environment;
         Duration toValidation = Duration.between(doc.createdAt, doc.validatedAt);
@@ -230,6 +235,13 @@ public class ResultRecorder {
                     .register(meters)
                     .record(toValidation);
         });
+    }
+
+    /** Last, after every other lock of the document's transaction (see {@link BatchClosure}). */
+    private void finishedInBatch(DocumentEntity doc) {
+        if (doc.batchId != null) {
+            batches.documentFinished(doc.batchId);
+        }
     }
 
     private void finalized(DocumentType type, Environment environment, String outcome) {
@@ -367,6 +379,7 @@ public class ResultRecorder {
             credits.release(documentId, Actor.system(), RESOLUTION_EXPIRED);
         }
         webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        finishedInBatch(doc);
         DocumentType type = doc.documentType;
         Environment environment = doc.environment;
         afterCommit.run(() -> finalized(type, environment, "failed"));
@@ -382,6 +395,7 @@ public class ResultRecorder {
         doc.status = DocumentStatus.FAILED;
         doc.dianStatusMessage = message;
         webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        finishedInBatch(doc);
         DocumentType type = doc.documentType;
         Environment environment = doc.environment;
         afterCommit.run(() -> finalized(type, environment, "failed"));

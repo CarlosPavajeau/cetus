@@ -15,6 +15,8 @@ export class CetusApiError extends Error {
     readonly code: string,
     message: string,
     readonly errors?: ProblemDetail["errors"],
+    /** The whole error body, for the few problems with members of their own; parse it before use. */
+    readonly body?: unknown,
   ) {
     super(message);
   }
@@ -53,6 +55,7 @@ function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
       body.code ?? "error",
       body.detail ?? body.title ?? response.statusText,
       body.errors,
+      result.error,
     );
   }
   return result.data;

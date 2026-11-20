@@ -899,6 +899,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/document-batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["ConsoleBatchResource_list"];
+        put?: never;
+        /** Create */
+        post: operations["ConsoleBatchResource_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/document-batches/same-file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Same File */
+        get: operations["ConsoleBatchResource_sameFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/document-batches/senders/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Forget Sender */
+        delete: operations["ConsoleBatchResource_forgetSender"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/document-batches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["ConsoleBatchResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/document-batches/{id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents */
+        get: operations["ConsoleBatchResource_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/document-batches/{id}/result.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Result */
+        get: operations["ConsoleBatchResource_result"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/documents": {
         parameters: {
             query?: never;
@@ -2441,7 +2544,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "DOCUMENT_LATE_VERDICT" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED" | "STATUS_INCIDENT_OPENED" | "STATUS_INCIDENT_UPDATED" | "STATUS_INCIDENT_RESOLVED" | "INBOUND_EVENT_REQUEUED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "DOCUMENT_BATCH_RECEIVED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "DOCUMENT_LATE_VERDICT" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED" | "STATUS_INCIDENT_OPENED" | "STATUS_INCIDENT_UPDATED" | "STATUS_INCIDENT_RESOLVED" | "INBOUND_EVENT_REQUEUED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -2473,6 +2576,156 @@ export interface components {
         };
         /** @enum {string} */
         BanEventType: "BANNED" | "UNBANNED";
+        BatchCounts: {
+            /** Format: int64 */
+            accepted: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            failed: number;
+            /** Format: int64 */
+            pending: number;
+            /** Format: int64 */
+            notCreated: number;
+        };
+        BatchCreated: {
+            id: components["schemas"]["UUID"];
+            status: components["schemas"]["BatchStatus"];
+            /** Format: int32 */
+            items: number;
+        };
+        /** @description El adquiriente. Si su identificación está en el catálogo de clientes, los campos vacíos se toman de allí. */
+        BatchCustomer: {
+            personType?: components["schemas"]["PersonType"];
+            identificationType: components["schemas"]["IdentificationType"];
+            identificationNumber: string;
+            checkDigit?: string;
+            legalName?: string;
+            tradeName?: string;
+            taxLevelCodes?: string[];
+            taxScheme?: components["schemas"]["CustomerTaxScheme"];
+            address?: components["schemas"]["AddressInput"];
+            email?: string;
+            phone?: string;
+        };
+        BatchDocument: {
+            id: components["schemas"]["UUID"];
+            /** Format: int32 */
+            position: number;
+            reference: string | null;
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            statusMessage: string | null;
+        };
+        BatchDocumentPage: {
+            /** @description By position */
+            items: components["schemas"]["BatchDocument"][];
+            /**
+             * Format: int32
+             * @description Pass as after to get the next page
+             */
+            nextCursor: number | null;
+        };
+        /** @description Un error de una factura del lote. */
+        BatchError: {
+            /**
+             * Format: int32
+             * @description Posición de la factura en el lote, desde 0.
+             */
+            index: number;
+            /** @description Referencia de la factura. */
+            reference: string | null;
+            /** @description Campo de la factura, como `lines[0].quantity`; vacío si es de toda la factura. */
+            field: string | null;
+            /**
+             * @description Código estable del error.
+             * @example customer_check_digit_invalid
+             */
+            code: string;
+            /** @description Explicación para personas. */
+            message: string;
+        };
+        /** @description Una factura del lote. */
+        BatchItem: {
+            /**
+             * @description Tu referencia de la factura, única en el lote.
+             * @example ARR-2026-11-001
+             */
+            reference: string;
+            /** @description Moneda ISO 4217. Por defecto, `COP`. */
+            currency?: string;
+            customer: components["schemas"]["BatchCustomer"];
+            payment: components["schemas"]["Payment"];
+            lines: components["schemas"]["BatchLine"][];
+            notes?: string[];
+        };
+        /** @description Una línea. Con un código del catálogo de productos, la descripción, la unidad, el precio y los impuestos vacíos se toman de allí. */
+        BatchLine: {
+            productCode?: string;
+            description?: string;
+            quantity: number;
+            unitCode?: string;
+            unitPrice?: number;
+            taxes?: components["schemas"]["LineTax"][];
+        };
+        BatchPage: {
+            /** @description Newest first */
+            items: components["schemas"]["BatchView"][];
+            /** @description Pass as before to get the next page */
+            nextCursor: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+        };
+        /** @description Un lote rechazado por sus facturas, con todos sus errores. */
+        BatchProblem: {
+            /**
+             * Format: int32
+             * @description Estado HTTP.
+             * @example 422
+             */
+            status: number;
+            /**
+             * @description Código estable del error.
+             * @example invalid_batch
+             */
+            code: string;
+            /** @description Explicación para personas. */
+            detail: string;
+            /** @description Los errores, por factura. */
+            errors: components["schemas"]["BatchError"][];
+        };
+        /** @description Facturas para emitir juntas. */
+        BatchRequest: {
+            /** @description Emisor de todas las facturas; fija el ambiente. */
+            issuerId: components["schemas"]["UUID"];
+            /** @description Nombre del archivo del que salen las facturas. */
+            fileName?: string;
+            /** @description SHA-256 del archivo, en hexadecimal. */
+            fileSha256?: string;
+            /** @description De 1 a 1000 facturas. */
+            items: components["schemas"]["BatchItem"][];
+        };
+        /** @enum {string} */
+        BatchSource: "CONSOLE" | "API";
+        /** @enum {string} */
+        BatchStatus: "RECEIVED" | "EXPANDING" | "PROCESSING" | "COMPLETED" | "PARTIAL" | "FAILED";
+        BatchView: {
+            id: components["schemas"]["UUID"];
+            issuerId: components["schemas"]["UUID"];
+            issuerName: string;
+            environment: components["schemas"]["Environment"];
+            status: components["schemas"]["BatchStatus"];
+            source: components["schemas"]["BatchSource"];
+            /** Format: int32 */
+            items: number;
+            counts: components["schemas"]["BatchCounts"];
+            fileName: string | null;
+            /** @description Why the batch stopped creating documents */
+            stopReason: string | null;
+            /** @description The expansion has created no document for a while: the batch waits for its turn */
+            waiting: boolean;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            expandedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            completedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         /** @description Who Cetus invoices for the account's purchases */
         BillingProfileView: {
             personType: components["schemas"]["PersonType"];
@@ -4258,6 +4511,14 @@ export interface components {
             message: string;
             /** @description The latest verdict that reported it */
             seenAt: components["schemas"]["OffsetDateTime"];
+        };
+        SameFile: {
+            id: components["schemas"]["UUID"];
+            status: components["schemas"]["BatchStatus"];
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        SameFileResult: {
+            batch: components["schemas"]["SameFile"] | null;
         };
         SavePaymentMethodRequest: {
             /** @description The token Wompi gave the browser for the card (tok_…) */
@@ -8184,9 +8445,261 @@ export interface operations {
             };
         };
     };
+    ConsoleBatchResource_list: {
+        parameters: {
+            query: {
+                before?: components["schemas"]["UUID"];
+                environment: components["schemas"]["Environment"];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchPage"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchCreated"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["BatchProblem"] | components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_sameFile: {
+        parameters: {
+            query: {
+                fileSha256: string;
+                issuerId: components["schemas"]["UUID"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SameFileResult"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_forgetSender: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_documents: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                status?: components["schemas"]["DocumentStatus"];
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchDocumentPage"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    ConsoleBatchResource_result: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     DocumentResource_list: {
         parameters: {
             query?: {
+                batchId?: components["schemas"]["UUID"];
                 before?: components["schemas"]["UUID"];
                 environment?: components["schemas"]["Environment"];
                 from?: components["schemas"]["LocalDate"];

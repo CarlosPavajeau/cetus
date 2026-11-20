@@ -1,0 +1,80 @@
+---
+title: Emitir facturas desde Excel
+description: Sube hasta 1000 facturas en un archivo, revisa sus errores antes de enviarlas y sigue el lote hasta el final.
+---
+
+Para facturar en masa (arriendos, suscripciones, el cierre de mes) no hace falta llenar el formulario una vez
+por factura. En la consola, **Documentos → Lotes desde Excel → Emitir desde Excel** recibe un archivo con
+todas las facturas, las revisa en tu navegador y las emite en segundo plano.
+
+## 1. Llena la plantilla
+
+Descarga la plantilla (`facturas-v1.xlsx`) desde la misma página. La hoja **Facturas** tiene una fila por
+cada **línea** de factura:
+
+- Las filas con la misma **Referencia** forman una factura, aunque no estén seguidas. La referencia es tuya
+  (por ejemplo, `ARR-2026-11-001`), debe ser única en el archivo y vuelve en el resultado.
+- Los datos del cliente, el pago y las notas van en la **primera fila** de cada referencia. En las demás
+  filas déjalos vacíos; si repites un valor distinto, la fila sale con error.
+- Las columnas con lista (tipo de identificación, responsabilidad fiscal, medio de pago, municipio, IVA,
+  impuesto al consumo…) traen un desplegable: elige el valor de la lista. Una línea puede llevar IVA e
+  impuesto al consumo a la vez.
+
+La hoja **Instrucciones** describe cada columna y trae un ejemplo de una factura de dos líneas.
+
+### Clientes y productos guardados
+
+Si el cliente ya está en **Clientes** del mismo ambiente, basta con su tipo y número de identificación: los
+demás datos se toman de allí, y lo que escribas en el archivo los reemplaza solo en esa factura. Igual con
+los productos: con el **Código de producto** de uno guardado, la descripción, la unidad, el precio y los
+impuestos vacíos salen del catálogo. El archivo no agrega clientes ni productos al catálogo.
+
+### Desde otro sistema: CSV
+
+La consola solo acepta como Excel la plantilla de Cetus. Si tus facturas salen de otro sistema o de otra hoja
+de cálculo, sube un `.csv` con **las mismas columnas y los mismos encabezados**, en UTF-8 (con o sin
+BOM), separado por comas o por punto y coma. En un CSV las listas aceptan la etiqueta o el código (`NIT`,
+`CASH`, `10`…), los números usan coma o punto decimal sin separadores de miles, y las fechas van como
+`AAAA-MM-DD` o `DD/MM/AAAA`.
+
+## 2. Revisa y emite
+
+Elige el emisor y sube el archivo (hasta 5 MB, 1000 facturas y 5000 filas). El archivo se lee en tu
+navegador: nada se envía hasta que confirmas. Antes verás:
+
+- Cuántas facturas están listas, el total con impuestos y a cuántos clientes les llegará el correo.
+- Una tabla con cada error, su **fila** y su **columna**. Corrige el archivo y súbelo de nuevo, o marca
+  **Excluir las N facturas con errores y emitir las otras M** (con los números de tu archivo) para emitir
+  solo las demás.
+- Un aviso si ya enviaste el mismo archivo con ese emisor en las últimas 24 horas.
+
+Al confirmar, Cetus vuelve a validar todo: el emisor, los catálogos, el rango de numeración (los números que la DIAN le autorizó al emisor) y tus créditos
+(en producción) o el tope diario (en simulación). Si una sola factura no es válida, **no se recibe ninguna
+ni se toma ningún número**, y los errores aparecen en sus filas.
+
+<Callout type="info">
+    Puedes tener hasta 5 lotes en curso al mismo tiempo. Si la conexión se cae al confirmar, vuelve
+    a intentarlo: el mismo envío nunca crea dos lotes.
+</Callout>
+
+## 3. Sigue el lote
+
+La página del lote muestra su avance, cuántas facturas se aceptaron, se rechazaron o fallaron, y cada factura
+con su número y estado. Las facturas se numeran en el orden del archivo, en bloques, así que las que emitas
+una por una mientras tanto siguen saliendo. Cuando termina, te llega un correo a ti, que lo enviaste.
+
+**Descargar el resultado** baja un CSV (que Excel abre directamente) con la referencia, la posición, el
+número, el CUFE (el código único que la DIAN le da a cada factura), el estado, el motivo de cada rechazo y si la factura se creó.
+
+| Estado del lote  | Qué significa                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| En espera        | Recibido, o sin crear facturas desde hace un rato; sigue solo cuando llega su turno. |
+| Creando facturas | Numerando y guardando las facturas, en bloques.                                      |
+| Procesando       | Todas las facturas existen; esperan la respuesta de la DIAN.                         |
+| Terminado        | Todas tienen una respuesta final. Revisa las rechazadas en el resultado.             |
+| Incompleto       | El lote se detuvo antes de crear todas sus facturas; las creadas siguieron igual.    |
+| Fallido          | El lote se detuvo sin crear ninguna factura.                                         |
+
+Un lote se detiene si, mientras crea las facturas, se acaban los créditos de la cuenta o los números del
+rango, o el emisor deja de estar habilitado (autorizado por la DIAN para facturar). Las facturas que faltaban **no se numeran**: el resultado dice
+cuáles son, para que las envíes en otro lote cuando resuelvas la causa.
