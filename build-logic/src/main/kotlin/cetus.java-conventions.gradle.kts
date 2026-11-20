@@ -44,6 +44,55 @@ tasks.register("resolveDependencies") {
     }
 }
 
+// The module graph, checked on the resolved classpaths so a path through another module counts too.
+val dependenciesForbidden = mapOf(
+    ":apps:api" to setOf(":modules:dian-client"),
+)
+val dependenciesForbiddenReason = mapOf(
+    ":modules:dian-client" to "the API validates, numbers, stores and enqueues; only the worker calls the DIAN",
+)
+val withoutDependencies = setOf(":modules:domain")
+
+val checkModuleGraph = tasks.register("checkModuleGraph") {
+    description = "Fails when this project reaches a module or a library the module graph does not allow."
+    group = "verification"
+    val projectPath = project.path
+    val forbidden = dependenciesForbidden[projectPath].orEmpty()
+    val isolated = projectPath in withoutDependencies
+    val roots = listOf("compileClasspath", "runtimeClasspath").map { name ->
+        configurations.named(name).flatMap { it.incoming.resolutionResult.rootComponent }
+    }
+    doLast {
+        val reached = roots.flatMap { root -> componentsReachable(root.get()) }.toSortedSet()
+        val violations = if (isolated) reached else reached.filter { it in forbidden }
+        if (violations.isNotEmpty()) {
+            val reasons = violations.map { "$it: ${dependenciesForbiddenReason[it] ?: "not allowed here"}" }
+            val rule = if (isolated) "$projectPath is plain Java and depends on nothing" else "$projectPath must not reach"
+            throw GradleException("$rule:\n  " + reasons.joinToString("\n  "))
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(checkModuleGraph) }
+
+fun componentsReachable(root: org.gradle.api.artifacts.result.ResolvedComponentResult): List<String> {
+    val seen = mutableSetOf<org.gradle.api.artifacts.result.ResolvedComponentResult>()
+    val pending = ArrayDeque(listOf(root))
+    while (pending.isNotEmpty()) {
+        pending.removeFirst().dependencies
+            .filterIsInstance<org.gradle.api.artifacts.result.ResolvedDependencyResult>()
+            .map { it.selected }
+            .filter(seen::add)
+            .forEach(pending::addLast)
+    }
+    return seen.map { component ->
+        when (val id = component.id) {
+            is org.gradle.api.artifacts.component.ProjectComponentIdentifier -> id.projectPath
+            else -> id.displayName
+        }
+    }
+}
+
 spotless {
     // Checked in CI (java-format.yml), not by `check`: the Docker images run `build` and must not fail on formatting.
     isEnforceCheck = false
