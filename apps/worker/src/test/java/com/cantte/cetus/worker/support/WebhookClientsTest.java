@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.cache.LocalCaches;
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import com.cantte.cetus.worker.support.WebhookClients.BlockedTargetException;
 import com.cantte.cetus.worker.support.WebhookClients.PublicOnlyDns;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -23,7 +23,7 @@ class WebhookClientsTest {
     @Test
     void aSecretRotationIsVisibleImmediately() {
         var clients = new WebhookClients(
-                Duration.ofSeconds(1), Duration.ofSeconds(1), false, new LocalCaches(new SimpleMeterRegistry()), 256);
+                Duration.ofSeconds(1), Duration.ofSeconds(1), false, new LocalCaches(MeterConventions.registry()), 256);
         var cipher = new FakeSecretCipher();
         clients.cipher = cipher;
         var endpoint = java.util.UUID.randomUUID();
@@ -34,7 +34,7 @@ class WebhookClientsTest {
     @Test
     void theClientRefusesToConnectToInternalAddresses() {
         WebhookClients clients = new WebhookClients(
-                Duration.ofSeconds(1), Duration.ofSeconds(1), false, new LocalCaches(new SimpleMeterRegistry()), 256);
+                Duration.ofSeconds(1), Duration.ofSeconds(1), false, new LocalCaches(MeterConventions.registry()), 256);
         Request request = new Request.Builder()
                 .url("http://localhost:9/hook")
                 .post(RequestBody.create("{}", MediaType.get("application/json")))

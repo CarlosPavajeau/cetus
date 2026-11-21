@@ -3,6 +3,7 @@ package com.cantte.cetus.lint.telemetry;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -15,6 +16,13 @@ public final class MeterConventions {
             Set.of("document.type", "environment", "outcome", "dian.operation", "job.type", "error.kind", "cache.name");
 
     private MeterConventions() {}
+
+    /** For unit tests that build their own registry instead of the one Quarkus filters. */
+    public static SimpleMeterRegistry registry() {
+        var registry = new SimpleMeterRegistry();
+        registry.config().meterFilter(attributesFromTheClosedList());
+        return registry;
+    }
 
     public static MeterFilter attributesFromTheClosedList() {
         return new MeterFilter() {

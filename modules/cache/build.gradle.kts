@@ -12,5 +12,6 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj)
+    testImplementation(project(":lint:telemetry"))
     testRuntimeOnly(libs.junit.launcher)
 }

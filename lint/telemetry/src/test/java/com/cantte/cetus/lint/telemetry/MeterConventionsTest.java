@@ -9,11 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class MeterConventionsTest {
 
-    private final SimpleMeterRegistry meters = new SimpleMeterRegistry();
-
-    MeterConventionsTest() {
-        meters.config().meterFilter(MeterConventions.attributesFromTheClosedList());
-    }
+    private final SimpleMeterRegistry meters = MeterConventions.registry();
 
     @Test
     void acceptsAttributesFromTheClosedList() {

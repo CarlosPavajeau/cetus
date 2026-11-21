@@ -2,12 +2,13 @@ package com.cantte.cetus.api.telemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 class ApiResponsesTest {
 
-    private final SimpleMeterRegistry meters = new SimpleMeterRegistry();
+    private final SimpleMeterRegistry meters = MeterConventions.registry();
     private final ApiResponses responses = new ApiResponses(meters);
 
     @Test

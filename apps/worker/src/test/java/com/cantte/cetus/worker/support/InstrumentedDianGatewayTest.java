@@ -11,6 +11,7 @@ import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.NumberingRangeResponse;
 import com.cantte.cetus.dian.UploadResponse;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import com.cantte.cetus.signing.KeyMaterial;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.common.AttributeKey;
@@ -32,7 +33,7 @@ class InstrumentedDianGatewayTest {
     private final SdkTracerProvider provider = SdkTracerProvider.builder()
             .addSpanProcessor(SimpleSpanProcessor.create(spans))
             .build();
-    private final SimpleMeterRegistry meters = new SimpleMeterRegistry();
+    private final SimpleMeterRegistry meters = MeterConventions.registry();
     private final DianGateway gateway =
             new InstrumentedDianGateway(new Unreachable(), Environment.LIVE, provider.get("test"), meters);
 
@@ -73,7 +74,7 @@ class InstrumentedDianGatewayTest {
                 .hasSize(DianOperation.values().length * 3)
                 .allSatisfy(counter -> assertThat(counter.count()).isZero());
 
-        SimpleMeterRegistry sandboxMeters = new SimpleMeterRegistry();
+        SimpleMeterRegistry sandboxMeters = MeterConventions.registry();
         new InstrumentedDianGateway(new Unreachable(), Environment.SANDBOX, provider.get("test"), sandboxMeters);
         assertThat(sandboxMeters.find("cetus.dian.request.errors").counters()).isEmpty();
     }
