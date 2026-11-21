@@ -3,6 +3,7 @@ package com.cantte.cetus.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.Optional;
@@ -12,7 +13,7 @@ class InstrumentedCacheTest {
 
     @Test
     void countsHitsMissesAndLoadErrorsPerCache() {
-        var meters = new SimpleMeterRegistry();
+        var meters = MeterConventions.registry();
         var caches = new LocalCaches(meters);
         Cache<String, String> cache = caches.shared("accounts", 8, Duration.ofMinutes(1), String.class);
 

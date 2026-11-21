@@ -3,7 +3,7 @@ package com.cantte.cetus.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -163,7 +163,7 @@ class LocalCacheTest {
     @Test
     void theRegistrySweepsEveryCacheItCreated() {
         var now = new AtomicReference<>(Instant.EPOCH);
-        var caches = new LocalCaches(new SimpleMeterRegistry(), now::get);
+        var caches = new LocalCaches(MeterConventions.registry(), now::get);
         LocalCache<String, String> first = caches.create(8, Duration.ofMinutes(1));
         LocalCache<String, String> second = caches.create(8, Duration.ofMinutes(5));
         first.get("a", () -> "first");

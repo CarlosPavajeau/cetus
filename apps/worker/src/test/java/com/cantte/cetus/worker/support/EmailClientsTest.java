@@ -7,7 +7,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PersonType;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import io.opentelemetry.api.OpenTelemetry;
 import java.time.Duration;
 import java.util.List;
@@ -59,7 +59,7 @@ class EmailClientsTest {
                 Optional.empty(),
                 Duration.ofSeconds(2),
                 OpenTelemetry.noop().getTracer("test"),
-                new SimpleMeterRegistry());
+                MeterConventions.registry());
         assertThat(onlyNotices.sender()).isEmpty();
         assertThat(onlyNotices.notificationSender()).isPresent();
         assertThat(onlyNotices.notificationsFrom()).isEqualTo("avisos@cetus.test");
@@ -110,7 +110,7 @@ class EmailClientsTest {
                 Optional.empty(),
                 Duration.ofSeconds(2),
                 OpenTelemetry.noop().getTracer("test"),
-                new SimpleMeterRegistry());
+                MeterConventions.registry());
         assertThat(withListsKey.contactLists()).isPresent();
     }
 
@@ -127,6 +127,6 @@ class EmailClientsTest {
                 testRecipient,
                 Duration.ofSeconds(2),
                 OpenTelemetry.noop().getTracer("test"),
-                new SimpleMeterRegistry());
+                MeterConventions.registry());
     }
 }

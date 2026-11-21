@@ -20,7 +20,7 @@ WORKDIR /src
 COPY . .
 RUN mkdir /out \
     && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties *gradle.lockfile /out/ \
-    && find modules apps \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
+    && find modules apps lint \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
 
 FROM java-build-base AS build
 WORKDIR /workspace
@@ -32,6 +32,7 @@ RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,t
 COPY --from=gradle-files /out ./
 RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,target=/root/.gradle ./gradlew :apps:api:resolveDependencies --no-daemon
 COPY modules modules
+COPY lint lint
 COPY apps/api apps/api
 # native-image's heap. With 4 GB on Railway's builder (4 cores) it spent 83% of the analysis in GC; bench/
 # passes 4g, since Docker on a laptop has less memory than Railway's builder.

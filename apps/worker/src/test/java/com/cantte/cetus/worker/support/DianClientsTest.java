@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import com.cantte.cetus.lint.telemetry.MeterConventions;
 import io.opentelemetry.api.OpenTelemetry;
 import java.time.Duration;
 import java.util.Optional;
@@ -19,7 +19,7 @@ class DianClientsTest {
             Optional.empty(),
             new SimulatedDianGateway(),
             OpenTelemetry.noop().getTracer("test"),
-            new SimpleMeterRegistry());
+            MeterConventions.registry());
 
     @Test
     void theSandboxNeverReachesTheDian() {

@@ -36,7 +36,8 @@ cetus/
 │   ├── email/          Outbound email behind EmailSender (Resend)
 │   ├── webhooks/       Outbound webhook events, Standard Webhooks signing, transactional publisher
 │   └── notifications/  Notices to account contacts, enqueued as emails in the caller's transaction
-├── build-logic/        Gradle convention plugins (cetus.java-conventions, cetus.java-library)
+├── lint/               Mechanical rules: ArchUnit (architecture) and the metric conventions (telemetry)
+├── build-logic/        Gradle convention plugins (cetus.java-conventions, cetus.java-library), module graph check
 ├── infra/              Local init (Postgres schemas, LocalStack), production AWS policies (IAM, S3 lifecycle), Grafana dashboards and alerts
 ├── scripts/            dev.sh (behind the mise tasks), Railway deploy, one-off data scripts
 ├── bench/              k6 load benchmarks against production images (see bench/README.md)
@@ -101,6 +102,7 @@ mise run test-console  # needs `mise run dev-mock` running
 
 # Database
 mise run migrate       # console "auth" schema; Flyway migrates "billing" when the API starts
+mise run migrations-check  # fails if a migration on origin/main was edited or deleted; CI runs it on PRs
 
 # Security (Trivy; the Security workflow runs the same on every PR, on main and nightly)
 mise run security-scan                  # dependencies, secrets and Dockerfiles; blocks PRs
@@ -110,9 +112,8 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
 
 ## Architecture rules
 
-- `domain` depends on no framework. Every other module points toward it.
 - The API never calls the DIAN: it validates, numbers, stores, and enqueues.
-  The worker does the rest; `apps/api` must not depend on `dian-client`.
+  The worker does the rest.
 - Better Auth owns users, organizations, and memberships in the `auth` schema.
   `billing.accounts.organization_id` stores the organization ID with no
   cross-schema foreign key.
@@ -123,9 +124,8 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
   columns a new plugin needs, copy them with `authSchema.table`, and discard
   the rest. Then `pnpm db:generate` creates the migration and
   `mise run migrate` applies it.
-- `OpenApiFilter` marks every member of a response schema as required; do not
-  add `@Schema(required = true)`. Mark members that can be null with
-  `@Schema(nullable = true)`. Requests take `required` from Bean Validation.
+- Mark response members that can be null with `@Schema(nullable = true)`;
+  `OpenApiFilter` marks the rest required.
 - The docs site publishes only `/v1`. After changing the public API, run `mise run docs-spec` and commit
   `openapi.public.json`; the contract workflow fails otherwise. Its texts and examples live in the API's
   annotations and `META-INF/openapi.yaml`, in Spanish (see `apps/docs/CONTRIBUTING.md`).
@@ -138,10 +138,9 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
 
 ## Migrations
 
-- Never edit an existing Flyway migration, even if its PR is unmerged or it
-  only ran locally. Add a new `V<n+1>__<name>.sql` in
-  `modules/persistence/src/main/resources/db/migration`; an edited migration
-  breaks every database that already applied it with a checksum mismatch.
+- `migrations-check` only sees migrations on `origin/main`. One from your own
+  branch that already ran locally also fails Flyway's checksum: add a new
+  `V<n+1>__<name>.sql` instead of editing it.
 
 ## Dependencies
 
@@ -195,12 +194,10 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
   `mise run infra-otel` locally with `CETUS_OTEL_DISABLED=false`). The console reports to Sentry.
 - Resource attributes: `service.name` (`cetus-api`, `cetus-worker`, `cetus-console`), `service.version`
   (commit SHA), `deployment.environment.name`.
-- Own metrics start with `cetus.`. Their attributes come from a closed list of low-cardinality values:
-  `document.type`, `environment` (`SANDBOX`, `TEST`, `LIVE`), `outcome`, `dian.operation`, `job.type`,
-  `error.kind`, `cache.name`. Adding another one needs review.
-- IDs go in spans and logs, never in metrics: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`,
-  `cetus.job.id`, `cetus.reference.id` (what a job works on), `dian.track_id`. No `account_id` and no issuer
-  NIT in metrics. `JobRunner` puts the job's IDs in the MDC, so every log line of a job carries them.
+- Own metrics start with `cetus.`; their attributes come from `MeterConventions.ATTRIBUTES`.
+- IDs go in spans and logs: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`, `cetus.job.id`,
+  `cetus.reference.id` (what a job works on), `dian.track_id`. `JobRunner` puts the job's IDs in the MDC, so
+  every log line of a job carries them.
 - Dashboards and alert rules live in `infra/grafana/` and are published with `mise run grafana-sync`
   (see its README). Change them there, not only in Grafana.
 - Never put in any telemetry: secrets (PIN, technical key, certificate and its password, API keys,
@@ -220,12 +217,17 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
   `maxFreq`. Follow this even when nearby code does not.
 - Handle every error. If a state is impossible, assert it rather than ignoring
   it.
-- The API compiles to native: a static `SecureRandom` needs its class in
-  `--initialize-at-run-time` (API `application.properties`), and a domain type that
-  Jackson reads by reflection (a JSON column) needs registering in `JsonColumnTypes`.
-  `mise run api-native-test` or the CI job catches what the JVM suite cannot.
 - Do not write raw JSON strings in tests. Encode and decode typed records or objects.
 - Do not hardcode IDs in tests.
+
+## Lint
+
+- The build checks the rules a machine can: `checkModuleGraph` (module graph,
+  in `build-logic`), `lint/architecture` (ArchUnit), `lint/telemetry` (metric
+  attributes, in the API and worker tests) and `mise run migrations-check`.
+  Their failures say what to fix and why.
+- When an agent's mistake can be detected from the code or the build, add a
+  rule there, not here. This file keeps the rules that need judgment.
 
 ## Code comments
 

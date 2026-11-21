@@ -35,6 +35,7 @@ dependencies {
     compileOnly(libs.jetbrains.annotations)
 
     testImplementation(libs.quarkus.junit)
+    testImplementation(project(":lint:telemetry"))
     // The worker never migrates in production; tests create the schema the same way the API does.
     testImplementation(libs.quarkus.flyway)
     testImplementation(libs.flyway.postgresql)
