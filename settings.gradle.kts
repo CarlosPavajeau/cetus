@@ -31,4 +31,6 @@ include(
     "apps:api",
     "apps:worker",
     "apps:dian-mock",
+    "lint:architecture",
+    "lint:telemetry",
 )

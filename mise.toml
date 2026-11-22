@@ -129,6 +129,11 @@ run = 'scripts/security-scan.sh images ${usage_app:-}'
 description = "Rewrite the Gradle lockfiles after changing a Java dependency"
 run = "./gradlew resolveDependencies --write-locks --console=plain"
 
+[tasks.migrations-check]
+description = "Fail if a Flyway migration that exists on origin/main (or the given base) was edited or deleted"
+run = 'scripts/migrations-check.sh ${usage_base:-}'
+usage = 'arg "[base]" help="Branch or commit to compare against (default origin/main)"'
+
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"
 run = "pnpm --filter @cetus/console test"

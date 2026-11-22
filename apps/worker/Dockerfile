@@ -16,7 +16,7 @@ WORKDIR /src
 COPY . .
 RUN mkdir /out \
     && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties *gradle.lockfile /out/ \
-    && find modules apps \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
+    && find modules apps lint \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
 
 FROM java-build-base AS build
 WORKDIR /workspace
@@ -28,6 +28,7 @@ RUN --mount=type=cache,id=s/de0bbaa5-d169-4ece-abe7-88ba34055bad-/root/.gradle,t
 COPY --from=gradle-files /out ./
 RUN --mount=type=cache,id=s/de0bbaa5-d169-4ece-abe7-88ba34055bad-/root/.gradle,target=/root/.gradle ./gradlew :apps:worker:resolveDependencies --no-daemon
 COPY modules modules
+COPY lint lint
 COPY apps/worker apps/worker
 # AOT enabled: packages an aot-jar (every class on the JDK's class loader, which the AOT cache needs) and makes
 # the app stop after static init when quarkus.appcds.generate is set. The cache Quarkus makes here, with the

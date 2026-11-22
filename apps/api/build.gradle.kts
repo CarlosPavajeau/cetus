@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.quarkus.micrometer.opentelemetry)
 
     testImplementation(libs.quarkus.junit)
+    testImplementation(project(":lint:telemetry"))
     testImplementation(libs.quarkus.smallrye.jwt.build)
     testImplementation(libs.rest.assured)
     testImplementation(libs.assertj)

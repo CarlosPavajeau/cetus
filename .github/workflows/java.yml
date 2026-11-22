@@ -36,6 +36,7 @@ jobs:
               - "apps/worker/**"
               - "apps/dian-mock/**"
               - "modules/**"
+              - "lint/**"
               - "build-logic/**"
               - "gradle/**"
               - "gradlew"
@@ -82,6 +83,21 @@ jobs:
           name: test-reports
           path: "**/build/reports/tests/"
           retention-days: 7
+
+  # Flyway rejects a migration whose checksum changed after a database applied it.
+  migrations:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check that no applied migration changed
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: scripts/migrations-check.sh "origin/$BASE_REF"
 
   # The API ships as a native binary: src/native-test runs against it, with Postgres and LocalStack in containers.
   native:
