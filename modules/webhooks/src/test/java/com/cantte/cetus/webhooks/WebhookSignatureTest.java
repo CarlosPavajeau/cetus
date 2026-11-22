@@ -3,12 +3,14 @@ package com.cantte.cetus.webhooks;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cantte.cetus.email.ResendWebhookVerifier;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 class WebhookSignatureTest {
 
-    private static final String BODY = "{\"id\":\"evt_1\",\"type\":\"invoice.accepted\"}";
+    private static final String BODY = json(new Event("evt_1", "invoice.accepted"));
 
     private final String secret = WebhookSignature.newSecret();
     private final Instant now = Instant.now();
@@ -62,5 +64,15 @@ class WebhookSignatureTest {
         String signature = WebhookSignature.sign(secret, "evt_1", now.getEpochSecond(), BODY);
         assertThat(new ResendWebhookVerifier(secret).verify("evt_1", timestamp, signature, BODY))
                 .isTrue();
+    }
+
+    record Event(String id, String type) {}
+
+    private static String json(Event event) {
+        try {
+            return new ObjectMapper().writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
@@ -108,7 +109,7 @@ class ProcessDocumentHandlerTest {
         UUID id = fixtures.invoice();
         useTestSet(id, "set-in-progress", null);
 
-        catchThrowable(() -> process(id));
+        assertThatThrownBy(() -> process(id));
 
         assertThat(dian.operations()).containsExactly("SendTestSetAsync");
     }
@@ -346,7 +347,7 @@ class ProcessDocumentHandlerTest {
         dian.reply(STATUS, Reply.fixture("get-status-not-found.xml"));
         UUID id = fixtures.invoice();
 
-        catchThrowableOfType(DianTransportException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(DianTransportException.class);
         process(id);
 
         assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);
@@ -377,7 +378,7 @@ class ProcessDocumentHandlerTest {
         dian.reply(STATUS, Reply.fixture("get-status-accepted.xml"));
         UUID id = fixtures.invoice();
 
-        catchThrowableOfType(DianTransportException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(DianTransportException.class);
         process(id);
 
         assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);

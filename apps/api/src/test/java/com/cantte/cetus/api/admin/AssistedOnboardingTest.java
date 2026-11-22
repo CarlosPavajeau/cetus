@@ -160,8 +160,9 @@ class AssistedOnboardingTest {
         try {
             CompletableFuture<Void> holder = CompletableFuture.runAsync(
                     () -> QuarkusTransaction.requiringNew().run(() -> {
-                        IssuerEntity.findForAccountForUpdate(UUID.fromString(accountId), UUID.fromString(issuerId))
-                                .orElseThrow();
+                        assertThat(IssuerEntity.findForAccountForUpdate(
+                                        UUID.fromString(accountId), UUID.fromString(issuerId)))
+                                .isPresent();
                         held.countDown();
                         try {
                             release.await(10, TimeUnit.SECONDS);

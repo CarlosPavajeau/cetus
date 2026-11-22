@@ -1,7 +1,7 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.domain.model.Environment;
@@ -110,7 +110,7 @@ class WebhookEventsTest {
         dian.reply("GetStatus", Reply.fixture("get-status-not-found.xml"));
         UUID id = fixtures.invoice();
 
-        catchThrowableOfType(DianFaultException.class, () -> processor.handle(fixtures.job(id, 1)));
+        assertThatThrownBy(() -> processor.handle(fixtures.job(id, 1))).isInstanceOf(DianFaultException.class);
         assertThat(events(id)).isEmpty();
 
         JobEntity job = fixtures.job(id, 10);

@@ -123,7 +123,9 @@ public class RefundOrderHandler implements JobHandler {
         if (found.isEmpty()) {
             return new Nothing();
         }
-        BillingOrderEntity.lock(found.get().orderId).orElseThrow();
+        if (BillingOrderEntity.lock(found.get().orderId).isEmpty()) {
+            throw new IllegalStateException("Reversal " + reversalId + " points to a missing order");
+        }
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId).orElseThrow();
         if (reversal.mode != PaymentReversalEntity.Mode.WOMPI) {
             return new Nothing();

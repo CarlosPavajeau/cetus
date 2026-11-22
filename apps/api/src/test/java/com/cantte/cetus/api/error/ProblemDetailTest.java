@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.not;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +49,7 @@ class ProblemDetailTest {
                 .body("instance", equalTo(path));
     }
 
+    @SuppressWarnings("RawJsonInTests")
     @Test
     void aBodyThatIsNotJsonIsAnInvalidRequest() {
         ConsoleUser user = ConsoleUser.newOrganization();
@@ -80,7 +82,7 @@ class ProblemDetailTest {
         bootstrap(user, "Enum SAS");
 
         user.request()
-                .body("{\"name\": \"ERP\", \"environment\": \"STAGING\"}")
+                .body(Map.of("name", "ERP", "environment", "STAGING"))
                 .post("/console/api-keys")
                 .then()
                 .statusCode(400)

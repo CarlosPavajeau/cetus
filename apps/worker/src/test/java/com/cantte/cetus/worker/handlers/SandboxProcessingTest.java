@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -260,7 +261,7 @@ class SandboxProcessingTest {
         process(second);
         delivery.handle(fixtures.job(first, 1));
         resend.reply(FakeResend.Reply.error(429, "rate_limit_exceeded", "Too many requests"));
-        catchThrowableOfType(RetryLater.class, () -> delivery.handle(fixtures.job(second, 1)));
+        assertThatThrownBy(() -> delivery.handle(fixtures.job(second, 1))).isInstanceOf(RetryLater.class);
 
         delivery.handle(fixtures.job(second, 2));
 

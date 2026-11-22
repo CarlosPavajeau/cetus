@@ -1,7 +1,7 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.credits.CreditLedger;
@@ -181,7 +181,7 @@ class IssueDateTest {
         UUID id = fixtures.invoice();
         dated(id, CREATED_ON, CREATED_AT);
         clock.set(Instant.parse("2026-11-19T04:59:59Z"));
-        catchThrowableOfType(DianTransportException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(DianTransportException.class);
         String cufe = document(id).cufe;
         clock.set(NEXT_DAY);
 
@@ -201,7 +201,7 @@ class IssueDateTest {
         UUID id = fixtures.invoice();
         dated(id, CREATED_ON, CREATED_AT);
         clock.set(Instant.parse("2026-11-19T04:59:59Z"));
-        catchThrowableOfType(IllegalStateException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(IllegalStateException.class);
         String cufe = document(id).cufe;
         clock.set(NEXT_DAY);
 
@@ -241,11 +241,11 @@ class IssueDateTest {
         UUID id = fixtures.invoice();
         dated(id, CREATED_ON, CREATED_AT);
         clock.set(Instant.parse("2026-11-19T04:59:59Z"));
-        catchThrowableOfType(IllegalStateException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(IllegalStateException.class);
         String cufe = document(id).cufe;
         clock.set(NEXT_DAY);
 
-        catchThrowableOfType(IllegalStateException.class, () -> process(id));
+        assertThatThrownBy(() -> process(id)).isInstanceOf(IllegalStateException.class);
 
         assertThat(document(id).cufe).isEqualTo(cufe);
         assertThat(document(id).issueDate).isEqualTo(CREATED_ON);

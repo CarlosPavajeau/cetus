@@ -268,8 +268,9 @@ public class Orders {
         if (payments.gateway().isEmpty()) {
             throw new PaymentsUnavailable();
         }
-        BillingOrderEntity.findForAccount(orderId, accountId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (BillingOrderEntity.findForAccount(orderId, accountId).isEmpty()) {
+            throw new NotFoundException("Order not found");
+        }
         BillingOrderEntity order = BillingOrderEntity.lock(orderId).orElseThrow();
         OffsetDateTime now = OffsetDateTime.now();
         if (!order.isPayable(now)) {
