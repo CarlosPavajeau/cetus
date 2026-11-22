@@ -32,5 +32,6 @@ include(
     "apps:worker",
     "apps:dian-mock",
     "lint:architecture",
+    "lint:errorprone",
     "lint:telemetry",
 )

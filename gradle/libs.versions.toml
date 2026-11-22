@@ -11,10 +11,13 @@ zxing = "3.5.4"
 spotless = "8.9.0"
 palantir-java-format = "2.102.0"
 archunit = "1.5.1"
+errorprone = "2.52.0"
+errorprone-gradle = "5.2.0"
 
 [libraries]
 # Build logic
 spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+errorprone-gradle = { module = "net.ltgt.gradle:gradle-errorprone-plugin", version.ref = "errorprone-gradle" }
 
 # BOMs (platforms) — align transitive versions
 quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
@@ -70,6 +73,9 @@ junit-bom = { module = "org.junit:junit-bom", version = "6.1.3" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
+errorprone-check-api = { module = "com.google.errorprone:error_prone_check_api", version.ref = "errorprone" }
+errorprone-test-helpers = { module = "com.google.errorprone:error_prone_test_helpers", version.ref = "errorprone" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [bundles]
