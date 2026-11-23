@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.cantte.cetus.domain.model.Environment;
@@ -129,7 +130,7 @@ class DeliverWebhookHandlerTest {
         UUID deliveryId = acceptedInvoiceDelivery();
         receiver.reply(FakeWebhookReceiver.Reply.late());
 
-        catchThrowableOfType(IOException.class, () -> handler.handle(job(deliveryId)));
+        assertThatThrownBy(() -> handler.handle(job(deliveryId))).isInstanceOf(IOException.class);
 
         WebhookDeliveryEntity delivery = delivery(deliveryId);
         assertThat(delivery.status).isEqualTo(Status.PENDING);
@@ -192,7 +193,7 @@ class DeliverWebhookHandlerTest {
         failingSince(OffsetDateTime.now().minusDays(4), 9);
         receiver.reply(FakeWebhookReceiver.Reply.status(503));
 
-        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+        assertThatThrownBy(() -> deliver(deliveryId)).isInstanceOf(IllegalStateException.class);
 
         WebhookEndpointEntity disabled = endpoint();
         assertThat(disabled.status).isEqualTo(WebhookEndpointEntity.Status.DISABLED);
@@ -233,7 +234,7 @@ class DeliverWebhookHandlerTest {
         failingSince(OffsetDateTime.now().minusHours(1), 50);
         receiver.reply(FakeWebhookReceiver.Reply.status(500));
 
-        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+        assertThatThrownBy(() -> deliver(deliveryId)).isInstanceOf(IllegalStateException.class);
 
         WebhookEndpointEntity endpoint = endpoint();
         assertThat(endpoint.status).isEqualTo(WebhookEndpointEntity.Status.ACTIVE);
@@ -248,7 +249,7 @@ class DeliverWebhookHandlerTest {
     void aSuccessEndsTheStreakOfFailures() {
         UUID deliveryId = acceptedInvoiceDelivery();
         receiver.reply(FakeWebhookReceiver.Reply.status(500));
-        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+        assertThatThrownBy(() -> deliver(deliveryId)).isInstanceOf(IllegalStateException.class);
         assertThat(endpoint().consecutiveFailures).isEqualTo(1);
         assertThat(endpoint().failingSince).isNotNull();
 

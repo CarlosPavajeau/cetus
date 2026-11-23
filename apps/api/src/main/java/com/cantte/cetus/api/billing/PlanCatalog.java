@@ -119,7 +119,9 @@ public class PlanCatalog {
     /** Every version of the plan, public and private, newest first. */
     @Transactional(Transactional.TxType.MANDATORY)
     public List<PlanVersionView> versions(UUID planId) {
-        PlanEntity.<PlanEntity>findByIdOptional(planId).orElseThrow(() -> new NotFoundException("Plan not found"));
+        if (PlanEntity.findByIdOptional(planId).isEmpty()) {
+            throw new NotFoundException("Plan not found");
+        }
         return PlanVersionEntity.listByPlan(planId).stream()
                 .map(PlanVersionView::from)
                 .toList();

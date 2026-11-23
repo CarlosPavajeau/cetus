@@ -1,7 +1,10 @@
 // Shared settings for every Java project in the repo.
+import net.ltgt.gradle.errorprone.errorprone
+
 plugins {
     java
     id("com.diffplug.spotless")
+    id("net.ltgt.errorprone")
 }
 
 java {
@@ -24,7 +27,34 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release = 25
     // Keeps parameter names for Jackson, JAX-RS and records.
-    options.compilerArgs.add("-parameters")
+    options.compilerArgs.addAll(listOf("-parameters", "-Xmaxerrs", "1000"))
+}
+
+val errorproneChecks = ":lint:errorprone"
+
+dependencies {
+    add("errorprone", versionCatalogs.named("libs").findLibrary("errorprone-core").get())
+    if (project.path != errorproneChecks) {
+        add("errorprone", project(errorproneChecks))
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.errorprone {
+        // Only errors fail the build; warnings nobody acts on would bury them in every compilation.
+        disableAllWarnings = true
+        excludedPaths = ".*/build/generated/.*"
+        error(
+            "CheckReturnValue",
+            "FutureReturnValueIgnored",
+            "UnusedVariable",
+            "MissingCasesInEnumSwitch",
+            "EqualsIncompatibleType",
+        )
+        if (name == "compileJava" && project.path != errorproneChecks) {
+            disable("RawJsonInTests")
+        }
+    }
 }
 
 tasks.withType<Test>().configureEach {

@@ -1,8 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.notifications.NotificationKind;
@@ -226,8 +226,7 @@ class SendNotificationHandlerTest {
                 NotificationKind.REJECTIONS_SPIKE,
                 Map.of("date", "22/10/2026", "rejected", "5", "total", "8", "rate", "63"));
         // The first address gets its email; Resend fails on the second.
-        resend.reply(
-                new Reply(200, "{\"id\":\"email-1\"}"), Reply.error(500, "internal_server_error", "Resend is down"));
+        resend.reply(Reply.sent("email-1"), Reply.error(500, "internal_server_error", "Resend is down"));
 
         assertThat(catchThrowable(() -> handler.handle(fixtures.notificationJob(id))))
                 .isNotNull();
@@ -269,7 +268,7 @@ class SendNotificationHandlerTest {
         UUID id = request(accountId, NotificationKind.ACCOUNT_SUSPENDED, Map.of("reason", "Pago vencido"));
         resend.reply(Reply.error(422, "validation_error", "Invalid `to` field"));
 
-        catchThrowableOfType(GiveUp.class, () -> handler.handle(fixtures.notificationJob(id)));
+        assertThatThrownBy(() -> handler.handle(fixtures.notificationJob(id))).isInstanceOf(GiveUp.class);
 
         assertThat(notice(id).status).isEqualTo(NotificationEntity.Status.FAILED);
     }

@@ -428,7 +428,7 @@ class SubscriptionsTest {
         // The payment holds the renewal, as PaymentSettlement does, while the upkeep closes its period.
         CompletableFuture<Outcome> payment = CompletableFuture.supplyAsync(() -> QuarkusTransaction.requiringNew()
                 .call(() -> {
-                    BillingOrderEntity.lock(renewal.id).orElseThrow();
+                    assertThat(BillingOrderEntity.lock(renewal.id)).isPresent();
                     locked.countDown();
                     release.await(10, TimeUnit.SECONDS);
                     return settlement.apply(approved(renewal));

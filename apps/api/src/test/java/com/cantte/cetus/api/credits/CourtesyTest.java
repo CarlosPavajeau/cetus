@@ -171,16 +171,16 @@ class CourtesyTest {
         slotsRemaining(1);
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(user, "Ajustada SAS"));
-        QuarkusTransaction.requiringNew()
-                .run(() -> ledger.grant(
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> ledger.grant(
                                 accountId,
                                 new CreditLedger.Source(CreditGrantEntity.SourceType.ADJUSTMENT, Ids.newId()),
                                 null,
                                 5,
                                 OffsetDateTime.now().plusMonths(1),
                                 Actor.system(),
-                                "Ajuste de las pruebas")
-                        .orElseThrow());
+                                "Ajuste de las pruebas")))
+                .isPresent();
 
         user.request().get("/console/credits").then().statusCode(200).body("courtesy.status", equalTo("OFFERED"));
         goLive(user, nit());

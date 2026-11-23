@@ -23,6 +23,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -169,8 +170,8 @@ class BillingCreditNotesTest {
     private static DocumentEntity document(UUID id) {
         return QuarkusTransaction.requiringNew().call(() -> {
             DocumentEntity doc = DocumentEntity.findById(id);
-            doc.lines.size();
-            doc.taxes.size();
+            Hibernate.initialize(doc.lines);
+            Hibernate.initialize(doc.taxes);
             return doc;
         });
     }

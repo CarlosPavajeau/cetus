@@ -200,6 +200,8 @@ class CreditNoteResourceTest {
         assertThat(replayed).isEqualTo(first);
     }
 
+    // No encoder writes a number this large.
+    @SuppressWarnings("RawJsonInTests")
     @Test
     @Timeout(30)
     void hugeExponentsInTheLinesAreRefusedBeforeAnyArithmetic() {

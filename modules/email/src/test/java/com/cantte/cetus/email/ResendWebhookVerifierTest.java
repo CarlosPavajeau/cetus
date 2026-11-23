@@ -2,6 +2,9 @@ package com.cantte.cetus.email;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import javax.crypto.Mac;
@@ -12,7 +15,7 @@ class ResendWebhookVerifierTest {
 
     private static final byte[] KEY = "a-test-signing-key-of-32-bytes!!".getBytes(StandardCharsets.UTF_8);
     private static final String SECRET = "whsec_" + Base64.getEncoder().encodeToString(KEY);
-    private static final String BODY = "{\"type\":\"email.delivered\",\"data\":{\"email_id\":\"email-123\"}}";
+    private static final String BODY = json(new Event("email.delivered", new Event.Data("email-123")));
 
     private final ResendWebhookVerifier verifier = new ResendWebhookVerifier(SECRET);
 
@@ -66,6 +69,21 @@ class ResendWebhookVerifierTest {
             return Base64.getEncoder()
                     .encodeToString(mac.doFinal((id + "." + timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    record Event(String type, Data data) {
+
+        record Data(String emailId) {}
+    }
+
+    private static String json(Event event) {
+        try {
+            return new ObjectMapper()
+                    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                    .writeValueAsString(event);
+        } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
     }

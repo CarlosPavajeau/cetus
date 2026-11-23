@@ -36,7 +36,7 @@ cetus/
 │   ├── email/          Outbound email behind EmailSender (Resend)
 │   ├── webhooks/       Outbound webhook events, Standard Webhooks signing, transactional publisher
 │   └── notifications/  Notices to account contacts, enqueued as emails in the caller's transaction
-├── lint/               Mechanical rules: ArchUnit (architecture) and the metric conventions (telemetry)
+├── lint/               Mechanical rules: ArchUnit (architecture), Error Prone checks (errorprone), metric conventions (telemetry)
 ├── build-logic/        Gradle convention plugins (cetus.java-conventions, cetus.java-library), module graph check
 ├── infra/              Local init (Postgres schemas, LocalStack), production AWS policies (IAM, S3 lifecycle), Grafana dashboards and alerts
 ├── scripts/            dev.sh (behind the mise tasks), Railway deploy, one-off data scripts
@@ -217,15 +217,17 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
   `maxFreq`. Follow this even when nearby code does not.
 - Handle every error. If a state is impossible, assert it rather than ignoring
   it.
-- Do not write raw JSON strings in tests. Encode and decode typed records or objects.
 - Do not hardcode IDs in tests.
 
 ## Lint
 
-- The build checks the rules a machine can: `checkModuleGraph` (module graph,
-  in `build-logic`), `lint/architecture` (ArchUnit), `lint/telemetry` (metric
-  attributes, in the API and worker tests) and `mise run migrations-check`.
-  Their failures say what to fix and why.
+- The build checks the rules a machine can: Error Prone on every compilation
+  (its errors plus the checks in `lint/errorprone`), `checkModuleGraph` (module
+  graph, in `build-logic`), `lint/architecture` (ArchUnit), `lint/telemetry`
+  (metric attributes, in the API and worker tests) and
+  `mise run migrations-check`. Their failures say what to fix and why.
+- Suppress a check only where the code needs exactly what it flags (a test of
+  malformed JSON), with `@SuppressWarnings("<check>")` on the narrowest element.
 - When an agent's mistake can be detected from the code or the build, add a
   rule there, not here. This file keeps the rules that need judgment.
 

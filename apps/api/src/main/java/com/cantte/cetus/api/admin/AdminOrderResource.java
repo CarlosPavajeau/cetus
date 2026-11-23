@@ -366,8 +366,9 @@ public class AdminOrderResource {
 
     private static BillingOrderEntity lock(UUID accountId, UUID orderId) {
         AccountEntity account = account(accountId);
-        BillingOrderEntity.findForAccount(orderId, account.id)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (BillingOrderEntity.findForAccount(orderId, account.id).isEmpty()) {
+            throw new NotFoundException("Order not found");
+        }
         return BillingOrderEntity.lock(orderId).orElseThrow();
     }
 

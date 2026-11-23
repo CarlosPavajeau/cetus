@@ -3,6 +3,8 @@ package com.cantte.cetus.email;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,12 +20,18 @@ import org.junit.jupiter.api.Test;
 /** The real SDK against a local HTTP server that plays Resend. */
 class ResendEmailSenderTest {
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     private HttpServer server;
     private final AtomicReference<Exchange> last = new AtomicReference<>();
     private volatile int status = 200;
-    private volatile String responseBody = "{\"id\":\"email-123\"}";
+    private volatile String responseBody = json(new Sent("email-123"));
 
     record Exchange(String path, String authorization, String idempotencyKey, String body) {}
+
+    record Sent(String id) {}
+
+    record Failure(int statusCode, String name, String message) {}
 
     @BeforeEach
     void start() throws IOException {
@@ -69,7 +77,7 @@ class ResendEmailSenderTest {
 
     @Test
     void aRateLimitCanBeRetriedLater() {
-        respond(429, "{\"statusCode\":429,\"name\":\"rate_limit_exceeded\",\"message\":\"Too many requests\"}");
+        respond(new Failure(429, "rate_limit_exceeded", "Too many requests"));
         assertThatThrownBy(() -> sender().send(message(), "delivery-1"))
                 .isInstanceOf(EmailRateLimited.class)
                 .hasMessageContaining("rate_limit_exceeded");
@@ -77,19 +85,19 @@ class ResendEmailSenderTest {
 
     @Test
     void aServerErrorIsTransient() {
-        respond(500, "{\"statusCode\":500,\"name\":\"internal_server_error\",\"message\":\"boom\"}");
+        respond(new Failure(500, "internal_server_error", "boom"));
         assertThatThrownBy(() -> sender().send(message(), "delivery-1")).isInstanceOf(EmailTransientException.class);
     }
 
     @Test
     void aConcurrentRequestWithTheSameKeyIsTransient() {
-        respond(409, "{\"statusCode\":409,\"name\":\"concurrent_idempotent_requests\",\"message\":\"in progress\"}");
+        respond(new Failure(409, "concurrent_idempotent_requests", "in progress"));
         assertThatThrownBy(() -> sender().send(message(), "delivery-1")).isInstanceOf(EmailTransientException.class);
     }
 
     @Test
     void aValidationErrorIsRejected() {
-        respond(422, "{\"statusCode\":422,\"name\":\"validation_error\",\"message\":\"Invalid `to` field\"}");
+        respond(new Failure(422, "validation_error", "Invalid `to` field"));
         assertThatThrownBy(() -> sender().send(message(), "delivery-1"))
                 .isInstanceOf(EmailRejectedException.class)
                 .hasMessageContaining("Invalid `to` field");
@@ -104,9 +112,17 @@ class ResendEmailSenderTest {
         assertThatThrownBy(() -> unreachable.send(message(), "delivery-1")).isInstanceOf(EmailTransientException.class);
     }
 
-    private void respond(int status, String body) {
-        this.status = status;
-        this.responseBody = body;
+    private void respond(Failure failure) {
+        this.status = failure.statusCode();
+        this.responseBody = json(failure);
+    }
+
+    private static String json(Object body) {
+        try {
+            return JSON.writeValueAsString(body);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private EmailSender sender() {

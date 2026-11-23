@@ -9,7 +9,6 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -32,14 +31,21 @@ public class FakeResend {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    public record Reply(int status, String body) {
+    /** What Resend answers: its body is encoded as JSON when sent. */
+    public record Reply(int status, Object body) {
+
+        public static Reply sent(String id) {
+            return new Reply(200, new Sent(id));
+        }
 
         public static Reply error(int status, String name, String message) {
-            return new Reply(
-                    status,
-                    "{\"statusCode\":" + status + ",\"name\":\"" + name + "\",\"message\":\"" + message + "\"}");
+            return new Reply(status, new Failure(status, name, message));
         }
     }
+
+    record Sent(String id) {}
+
+    record Failure(int statusCode, String name, String message) {}
 
     /** A request received: its authorization and idempotency headers and the parsed JSON body. */
     public record Request(String authorization, String idempotencyKey, JsonNode body) {}
@@ -147,9 +153,9 @@ public class FakeResend {
             reply = replies.poll();
         }
         if (reply == null) {
-            reply = new Reply(200, "{\"id\":\"email-" + key + "\"}");
+            reply = Reply.sent("email-" + key);
         }
-        byte[] bytes = reply.body().getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = JSON.writeValueAsBytes(reply.body());
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(reply.status(), bytes.length);
         exchange.getResponseBody().write(bytes);

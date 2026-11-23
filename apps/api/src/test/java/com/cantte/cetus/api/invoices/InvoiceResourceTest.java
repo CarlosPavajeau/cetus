@@ -271,6 +271,8 @@ class InvoiceResourceTest {
         }
     }
 
+    // No encoder writes a number this large.
+    @SuppressWarnings("RawJsonInTests")
     @Test
     @Timeout(30)
     void hugeExponentsAreRefusedBeforeAnyArithmetic() {
@@ -366,7 +368,7 @@ class InvoiceResourceTest {
         String issuerId = ConsoleFixtures.onboard(user).issuerId();
         String apiKey = testKey(user);
 
-        for (String legalName : List.of("Acme\u0001", "Acme\u0000", "Acme ‮moc.live")) {
+        for (String legalName : List.of("Acme\u0001", "Acme\u0000", "Acme \u202Emoc.live")) {
             api(apiKey)
                     .header("Idempotency-Key", UUID.randomUUID().toString())
                     .body(invoiceWithCustomer(issuerId, Map.of("legalName", legalName)))

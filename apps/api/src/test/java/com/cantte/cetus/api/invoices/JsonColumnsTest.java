@@ -9,6 +9,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -32,13 +33,18 @@ class JsonColumnsTest {
                 .statusCode(200)
                 .extract()
                 .path("secret");
-        String body = """
-                {"issuerId": "%s",
-                 "customer": {"personType": "NATURAL_PERSON", "identificationType": "CITIZEN_ID",
-                              "identificationNumber": "1020304050", "legalName": "Consumidor Final"},
-                 "payment": {"method": "CREDIT", "meansCode": "10", "dueDate": "2026-11-30"},
-                 "lines": [{"itemCode": "SERV-1", "description": "Servicio", "quantity": 1, "unitPrice": 100}]}
-                """.formatted(issuerId);
+        Map<String, Object> body = Map.of(
+                "issuerId", issuerId,
+                "customer",
+                        Map.of(
+                                "personType", "NATURAL_PERSON",
+                                "identificationType", "CITIZEN_ID",
+                                "identificationNumber", "1020304050",
+                                "legalName", "Consumidor Final"),
+                "payment", Map.of("method", "CREDIT", "meansCode", "10", "dueDate", "2026-11-30"),
+                "lines",
+                        List.of(Map.of(
+                                "itemCode", "SERV-1", "description", "Servicio", "quantity", 1, "unitPrice", 100)));
         String id = given().header("Authorization", "Bearer " + apiKey)
                 .contentType(ContentType.JSON)
                 .header("Idempotency-Key", UUID.randomUUID().toString())
