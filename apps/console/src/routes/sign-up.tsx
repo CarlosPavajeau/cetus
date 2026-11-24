@@ -19,6 +19,7 @@ import { createWorkspace } from "~/features/auth/workspace";
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 import { LegalLink } from "~/features/legal/LegalLink";
 import { track } from "~/features/marketing/analytics";
+import { rememberedCampaign } from "~/features/marketing/campaign";
 import { signUpSearch } from "~/features/marketing/links";
 import { useAnalytics } from "~/features/marketing/useAnalytics";
 import { getInvitedOrganization } from "~/features/members/server";
@@ -86,7 +87,12 @@ function SignUp() {
       return;
     }
 
-    track({ name: "sign_up", audience: audience ?? null, ref: ref ?? null });
+    track({
+      name: "sign_up",
+      audience: audience ?? null,
+      ref: ref ?? null,
+      ...rememberedCampaign(),
+    });
     // Sign-up does not ask for the company, so the workspace starts with the person's name.
     if (!(await createWorkspace(name))) {
       form.setError("root", {

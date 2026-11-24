@@ -26,6 +26,7 @@ import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as MarketingContadoresRouteImport } from './routes/_marketing/contadores'
 import { Route as MarketingEstoyObligadoAFacturarRouteImport } from './routes/_marketing/estoy-obligado-a-facturar'
+import { Route as MarketingFacturacionPorLotesRouteImport } from './routes/_marketing/facturacion-por-lotes'
 import { Route as MarketingPreciosRouteImport } from './routes/_marketing/precios'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
@@ -158,6 +159,12 @@ const MarketingEstoyObligadoAFacturarRoute =
   MarketingEstoyObligadoAFacturarRouteImport.update({
     id: '/estoy-obligado-a-facturar',
     path: '/estoy-obligado-a-facturar',
+    getParentRoute: () => MarketingRoute,
+  } as any)
+const MarketingFacturacionPorLotesRoute =
+  MarketingFacturacionPorLotesRouteImport.update({
+    id: '/facturacion-por-lotes',
+    path: '/facturacion-por-lotes',
     getParentRoute: () => MarketingRoute,
   } as any)
 const MarketingPreciosRoute = MarketingPreciosRouteImport.update({
@@ -438,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/overview': typeof AppOverviewRoute
   '/contadores': typeof MarketingContadoresRoute
   '/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
+  '/facturacion-por-lotes': typeof MarketingFacturacionPorLotesRoute
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -504,6 +512,7 @@ export interface FileRoutesByTo {
   '/overview': typeof AppOverviewRoute
   '/contadores': typeof MarketingContadoresRoute
   '/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
+  '/facturacion-por-lotes': typeof MarketingFacturacionPorLotesRoute
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -573,6 +582,7 @@ export interface FileRoutesById {
   '/_app/overview': typeof AppOverviewRoute
   '/_marketing/contadores': typeof MarketingContadoresRoute
   '/_marketing/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
+  '/_marketing/facturacion-por-lotes': typeof MarketingFacturacionPorLotesRoute
   '/_marketing/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/contadores'
     | '/estoy-obligado-a-facturar'
+    | '/facturacion-por-lotes'
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -708,6 +719,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/contadores'
     | '/estoy-obligado-a-facturar'
+    | '/facturacion-por-lotes'
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -776,6 +788,7 @@ export interface FileRouteTypes {
     | '/_app/overview'
     | '/_marketing/contadores'
     | '/_marketing/estoy-obligado-a-facturar'
+    | '/_marketing/facturacion-por-lotes'
     | '/_marketing/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -973,6 +986,13 @@ declare module '@tanstack/react-router' {
       path: '/estoy-obligado-a-facturar'
       fullPath: '/estoy-obligado-a-facturar'
       preLoaderRoute: typeof MarketingEstoyObligadoAFacturarRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/facturacion-por-lotes': {
+      id: '/_marketing/facturacion-por-lotes'
+      path: '/facturacion-por-lotes'
+      fullPath: '/facturacion-por-lotes'
+      preLoaderRoute: typeof MarketingFacturacionPorLotesRouteImport
       parentRoute: typeof MarketingRoute
     }
     '/_marketing/precios': {
@@ -1430,6 +1450,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface MarketingRouteChildren {
   MarketingContadoresRoute: typeof MarketingContadoresRoute
   MarketingEstoyObligadoAFacturarRoute: typeof MarketingEstoyObligadoAFacturarRoute
+  MarketingFacturacionPorLotesRoute: typeof MarketingFacturacionPorLotesRoute
   MarketingPreciosRoute: typeof MarketingPreciosRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
 }
@@ -1437,6 +1458,7 @@ interface MarketingRouteChildren {
 const MarketingRouteChildren: MarketingRouteChildren = {
   MarketingContadoresRoute: MarketingContadoresRoute,
   MarketingEstoyObligadoAFacturarRoute: MarketingEstoyObligadoAFacturarRoute,
+  MarketingFacturacionPorLotesRoute: MarketingFacturacionPorLotesRoute,
   MarketingPreciosRoute: MarketingPreciosRoute,
   MarketingIndexRoute: MarketingIndexRoute,
 }

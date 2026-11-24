@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowRightIcon,
   FileCheck2Icon,
+  FileSpreadsheetIcon,
   FlaskConicalIcon,
   HashIcon,
   KeyRoundIcon,
@@ -100,6 +101,26 @@ export function FeaturesSection({
       </ul>
       {children}
     </Section>
+  );
+}
+
+/** The way to bulk-issue from the console, for a business that bills many customers at once. */
+export function BatchesNote() {
+  return (
+    <Link
+      to="/facturacion-por-lotes"
+      className="flex items-center gap-4 rounded-xl border p-5 hover:bg-muted/40"
+    >
+      <FileSpreadsheetIcon className="size-5 shrink-0 text-muted-foreground" />
+      <span className="flex flex-col gap-1">
+        <span className="text-base font-medium">¿Facturas cientos de ventas al mes?</span>
+        <span className="text-md/6 text-pretty text-muted-foreground">
+          Súbelas en un Excel y Cetus emite cada factura. Mira cómo funciona la facturación por
+          lotes.
+        </span>
+      </span>
+      <ArrowRightIcon className="ml-auto size-4 shrink-0" />
+    </Link>
   );
 }
 

@@ -1,5 +1,6 @@
 import type { PostHog } from "posthog-js";
 
+import type { Campaign } from "./campaign";
 import type { Audience } from "./links";
 import type { ObligationVerdict } from "./obligation";
 import type { SnippetName } from "./snippets";
@@ -12,7 +13,8 @@ export type CtaSection =
   | "pricing"
   | "final"
   | "calculator"
-  | "partners";
+  | "partners"
+  | "batches";
 
 export type LeadKind = "calculator" | "partner" | "integration";
 
@@ -22,7 +24,8 @@ export type MarketingEvent =
   | { name: "copy_snippet"; snippet: SnippetName }
   | { name: "pricing_view"; page: "landing" | "precios" }
   | { name: "whatsapp_click"; section: CtaSection | "float" }
-  | { name: "sign_up"; audience: Audience | null; ref: string | null }
+  | ({ name: "sign_up"; audience: Audience | null; ref: string | null } & Campaign)
+  | { name: "template_download"; page: "batches" }
   | { name: "calculator_completed"; verdict: ObligationVerdict }
   | { name: "lead_submitted"; kind: LeadKind };
 
@@ -32,6 +35,7 @@ const measuredPaths = new Set([
   "/precios",
   "/estoy-obligado-a-facturar",
   "/contadores",
+  "/facturacion-por-lotes",
   "/sign-up",
 ]);
 
