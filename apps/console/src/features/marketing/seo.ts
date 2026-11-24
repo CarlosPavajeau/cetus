@@ -36,4 +36,5 @@ export const marketingPaths = [
   "/precios",
   "/estoy-obligado-a-facturar",
   "/contadores",
+  "/facturacion-por-lotes",
 ] as const;

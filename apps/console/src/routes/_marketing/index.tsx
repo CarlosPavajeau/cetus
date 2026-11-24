@@ -17,6 +17,7 @@ import { faqJsonLd, landingFaq } from "~/features/marketing/questions";
 import { RequestDemo } from "~/features/marketing/RequestDemo";
 import { Section } from "~/features/marketing/Section";
 import {
+  BatchesNote,
   BusinessSection,
   FeaturesSection,
   HabilitacionSection,
@@ -119,6 +120,7 @@ function Landing() {
           <HabilitacionSection />
           <TrustBand />
           <FeaturesSection audience={audience}>
+            <BatchesNote />
             <UpcomingIntegrations audience="negocio" />
           </FeaturesSection>
         </>

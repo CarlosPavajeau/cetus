@@ -13,7 +13,8 @@ export type CtaSection =
   | "pricing"
   | "final"
   | "calculator"
-  | "partners";
+  | "partners"
+  | "batches";
 
 export type LeadKind = "calculator" | "partner" | "integration";
 
@@ -24,6 +25,7 @@ export type MarketingEvent =
   | { name: "pricing_view"; page: "landing" | "precios" }
   | { name: "whatsapp_click"; section: CtaSection | "float" }
   | ({ name: "sign_up"; audience: Audience | null; ref: string | null } & Campaign)
+  | { name: "template_download"; page: "batches" }
   | { name: "calculator_completed"; verdict: ObligationVerdict }
   | { name: "lead_submitted"; kind: LeadKind };
 
@@ -33,6 +35,7 @@ const measuredPaths = new Set([
   "/precios",
   "/estoy-obligado-a-facturar",
   "/contadores",
+  "/facturacion-por-lotes",
   "/sign-up",
 ]);
 

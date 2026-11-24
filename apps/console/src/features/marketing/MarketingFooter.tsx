@@ -34,6 +34,11 @@ export function MarketingFooter() {
             </Link>
           </li>
           <li>
+            <Link to="/facturacion-por-lotes" className="hover:text-foreground">
+              Facturación por lotes
+            </Link>
+          </li>
+          <li>
             <a href={statusPageUrl} className="hover:text-foreground">
               Estado del servicio
             </a>

@@ -127,7 +127,7 @@ function PriceList({
 }
 
 /** The courtesy documents for the first accounts in production, while slots remain. */
-function CourtesyNote() {
+export function CourtesyNote() {
   const { data: figures } = useQuery(landingFiguresQuery);
   const courtesy = figures?.courtesy;
   if (!courtesy || courtesy.slotsRemaining === 0) {

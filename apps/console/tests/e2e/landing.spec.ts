@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
+import { templatePath } from "~/features/batches/columns";
 import { formatCents } from "~/features/billing/labels";
 import { acceptedDocumentsMin } from "~/features/marketing/figures";
 
@@ -186,4 +187,26 @@ test("the trust band waits for real production figures", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Cetus en producción" })).toHaveCount(
     figures.acceptedDocuments >= acceptedDocumentsMin ? 1 : 0,
   );
+});
+
+test("the batches page offers the template and the sign-up", async ({ page }) => {
+  await open(page, "/");
+  await page.getByRole("button", { name: "Para negocios" }).first().click();
+  await page.getByRole("link", { name: /Facturas cientos de ventas al mes/ }).click();
+
+  await expect(page).toHaveURL(/\/facturacion-por-lotes$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Sube un Excel, emite cientos de facturas" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Crear cuenta gratis" }).first(),
+  ).toHaveAttribute("href", "/sign-up?audience=negocio");
+
+  await expect(page.getByRole("link", { name: "Descargar la plantilla" }).first()).toHaveAttribute(
+    "href",
+    templatePath,
+  );
+  const template = await fetch(new URL(templatePath, page.url()));
+  expect(template.ok).toBe(true);
+  expect(template.headers.get("content-type")).toContain("spreadsheetml");
 });
