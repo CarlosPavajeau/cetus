@@ -15,6 +15,7 @@ import io.quarkus.arc.Arc;
 import io.quarkus.arc.ManagedContext;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.scheduler.Scheduled;
+import io.quarkus.scheduler.Scheduler;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -91,6 +92,9 @@ public class JobRunner {
 
     @Inject
     Tracer tracer;
+
+    @Inject
+    Scheduler scheduler;
 
     @Inject
     MeterRegistry meters;
@@ -388,8 +392,13 @@ public class JobRunner {
     /**
      * Stops claiming and gives the running jobs a moment to finish. One still running when the worker stops is
      * claimed again once its lease expires, as after a crash.
+     *
+     * <p>Pauses the scheduler first: it runs on Quarkus' managed executor, which ignores its shutdown, so its
+     * triggers keep firing until the JVM exits, after Hibernate has closed and while OpenTelemetry flushes. A
+     * poll then would create a new runner, as the application context is gone, and fail to claim.
      */
     void stop(@Observes ShutdownEvent event) throws InterruptedException {
+        scheduler.pause();
         stopping = true;
         executor.shutdown();
         if (!executor.awaitTermination(SHUTDOWN_GRACE.toSeconds(), TimeUnit.SECONDS)) {
